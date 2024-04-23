@@ -1,1 +1,1 @@
-# PixelPromo-PromoManagement
+# PixelPromo-API
