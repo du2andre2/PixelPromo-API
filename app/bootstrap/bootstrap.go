@@ -4,7 +4,9 @@ import (
 	"context"
 	"go.uber.org/fx"
 	"pixelPromo/adapter/aws"
+	"pixelPromo/adapter/config"
 	"pixelPromo/domain/service"
+	"pixelPromo/port/controller"
 	"pixelPromo/port/daemon"
 	"pixelPromo/port/route"
 )
@@ -14,6 +16,7 @@ var AdapterModule = fx.Module("adapter",
 		aws.NewDynamoDb,
 		aws.NewBucketS3,
 		aws.NewConfigAWS,
+		config.NewConfig,
 	),
 )
 
@@ -27,6 +30,7 @@ var PortModule = fx.Module("port",
 	fx.Provide(
 		route.NewServer,
 		route.NewRoute,
+		controller.NewController,
 		daemon.NewDaemon,
 	),
 )

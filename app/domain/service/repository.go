@@ -2,6 +2,7 @@ package service
 
 import (
 	"pixelPromo/adapter/aws"
+	"pixelPromo/adapter/config"
 	"pixelPromo/domain/model"
 )
 
@@ -11,17 +12,20 @@ type Repository interface {
 }
 
 type repository struct {
-	db aws.DynamoDB
-	s3 aws.BucketS3
+	db  aws.DynamoDB
+	s3  aws.BucketS3
+	cfg *config.Config
 }
 
 func NewRepository(
 	db aws.DynamoDB,
 	s3 aws.BucketS3,
+	cfg *config.Config,
 ) Repository {
 	return &repository{
-		db: db,
-		s3: s3,
+		db:  db,
+		s3:  s3,
+		cfg: cfg,
 	}
 }
 

@@ -24,7 +24,7 @@ func NewRoute(
 func (r *route) Setup(router *gin.Engine) {
 
 	router.GET("/user", r.controller.GetUser)
-	router.GET("/user/:id", r.controller.GetUser)
+	router.GET("/user/:id", r.controller.GetUserByID)
 
 	return
 }

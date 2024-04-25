@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"pixelPromo/domain/service"
@@ -10,6 +9,7 @@ import (
 
 type Controller interface {
 	GetUser(*gin.Context)
+	GetUserByID(ctx *gin.Context)
 }
 
 type controller struct {
@@ -28,18 +28,15 @@ func (r *controller) GetUser(ctx *gin.Context) {
 	user, err := r.repository.GetUser()
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.Error{Err: err})
+		return
 	}
 
 	if user == nil {
 		ctx.IndentedJSON(http.StatusNotFound, gin.H{"message": "album not found"})
+		return
 	}
 
-	userJson, err := json.Marshal(user)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.Error{Err: err})
-	}
-
-	ctx.JSON(http.StatusOK, userJson)
+	ctx.IndentedJSON(http.StatusOK, user)
 	return
 
 }
@@ -63,12 +60,7 @@ func (r *controller) GetUserByID(ctx *gin.Context) {
 		return
 	}
 
-	userJson, err := json.Marshal(user)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.Error{Err: err})
-	}
-
-	ctx.JSON(http.StatusOK, userJson)
+	ctx.IndentedJSON(http.StatusOK, user)
 	return
 
 }

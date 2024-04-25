@@ -10,11 +10,11 @@ type Daemon interface {
 }
 
 type daemon struct {
-	repository *service.Repository
+	repository service.Repository
 }
 
 func NewDaemon(
-	repository *service.Repository,
+	repository service.Repository,
 ) Daemon {
 	return &daemon{
 		repository: repository,
