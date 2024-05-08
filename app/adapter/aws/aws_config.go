@@ -15,7 +15,7 @@ func NewConfigAWS(c *cfg.Config) *aws.Config {
 
 		awsConfig, err := config.LoadDefaultConfig(context.TODO(),
 			config.WithRegion(c.Viper.GetString("aws.config.region")),
-			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("local", "local", "local")),
+			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("local", "local", "")),
 		)
 
 		endpoint := c.Viper.GetString("aws.config.local-endpoint")
@@ -28,7 +28,9 @@ func NewConfigAWS(c *cfg.Config) *aws.Config {
 		return &awsConfig
 	}
 
-	awsConfig, err := config.LoadDefaultConfig(context.TODO())
+	awsConfig, err := config.LoadDefaultConfig(context.TODO(),
+		config.WithRegion(c.Viper.GetString("aws.config.region")),
+	)
 	if err != nil {
 		log.Fatalf("unable to load SDK config, %v", err)
 	}
