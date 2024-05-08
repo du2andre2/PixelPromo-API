@@ -30,3 +30,7 @@ aws dynamodb put-item \
     --item \
         '{"Artist": {"S": "No One You Know"}, "SongTitle": {"S": "Call Me Today"}, "AlbumTitle": {"S": "Somewhat Famous"}, "Awards": {"N": "1"}}' \
     --endpoint-url http://localhost:4566
+
+aws s3api create-bucket \
+    --bucket my-bucket \
+    --endpoint-url http://localhost:4566
