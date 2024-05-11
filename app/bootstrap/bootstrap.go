@@ -7,7 +7,6 @@ import (
 	"pixelPromo/adapter/config"
 	"pixelPromo/domain/service"
 	"pixelPromo/port/controller"
-	"pixelPromo/port/daemon"
 	"pixelPromo/port/route"
 )
 
@@ -31,7 +30,6 @@ var PortModule = fx.Module("port",
 		route.NewServer,
 		route.NewRoute,
 		controller.NewController,
-		daemon.NewDaemon,
 	),
 )
 
@@ -45,17 +43,14 @@ var Module = fx.Options(
 func bootstrap(
 	lifecycle fx.Lifecycle,
 	server route.Server,
-	daemon daemon.Daemon,
 ) {
 
 	lifecycle.Append(fx.Hook{
 		OnStart: func(context.Context) error {
-			go daemon.Run()
 			go server.Run()
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
-			daemon.Stop()
 			return nil
 		},
 	})

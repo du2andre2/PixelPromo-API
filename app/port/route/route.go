@@ -23,9 +23,19 @@ func NewRoute(
 
 func (r *route) Setup(router *gin.Engine) {
 
-	router.GET("/user", r.controller.GetUser)
-	router.GET("/user/:id", r.controller.GetUserByID)
-	router.POST("/offer", r.controller.PutOffer)
+	userGroup := router.Group("/users")
+	{
+		userGroup.POST("/", r.controller.CreateUser)
+		userGroup.POST("/picture/:id", r.controller.UpdateUserPicture)
+		userGroup.GET("/:id", r.controller.GetUserByID)
+	}
+
+	promotionGroup := router.Group("/promotions")
+	{
+		promotionGroup.POST("/", r.controller.CreatePromotion)
+		userGroup.POST("/image/:id", r.controller.UpdatePromotionImage)
+		promotionGroup.GET("/:id", r.controller.GetPromotionByID)
+	}
 
 	return
 }
