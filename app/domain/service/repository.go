@@ -40,6 +40,8 @@ type repository struct {
 
 func (r repository) CreateUser(ctx context.Context, user *model.User) error {
 
+	user.ID = "1"
+
 	err := r.db.PutItem(ctx,
 		&aws.PutItemInput{
 			TableName: r.cfg.Viper.GetString("aws.dynamodb.tables.user"),

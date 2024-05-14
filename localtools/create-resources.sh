@@ -12,32 +12,27 @@ aws dynamodb create-table \
         AttributeName=id,KeyType=HASH \
     --provisioned-throughput \
         ReadCapacityUnits=5,WriteCapacityUnits=5 \
-    --endpoint-url http://localhost:4566
+    --endpoint-url http://localhost:4566 > /dev/null
 
 aws dynamodb create-table \
     --table-name pp-promotion-catalog \
     --attribute-definitions \
         AttributeName=id,AttributeType=S \
-        AttributeName=userID,AttributeType=S \
     --key-schema \
         AttributeName=id,KeyType=HASH \
     --provisioned-throughput \
         ReadCapacityUnits=5,WriteCapacityUnits=5 \
-    --endpoint-url http://localhost:4566
+    --endpoint-url http://localhost:4566 > /dev/null
 
 aws dynamodb create-table \
     --table-name pp-promotion-interaction \
     --attribute-definitions \
         AttributeName=id,AttributeType=S \
-        AttributeName=promotionID,AttributeType=S \
-        AttributeName=userID,AttributeType=S \
-        AttributeName=interactionDate,AttributeType=S \
-        AttributeName=type,AttributeType=S \
     --key-schema \
         AttributeName=id,KeyType=HASH \
     --provisioned-throughput \
         ReadCapacityUnits=5,WriteCapacityUnits=5 \
-    --endpoint-url http://localhost:4566
+    --endpoint-url http://localhost:4566 > /dev/null
 
 aws dynamodb create-table \
     --table-name pp-category-catalog \
@@ -47,18 +42,17 @@ aws dynamodb create-table \
         AttributeName=id,KeyType=HASH \
     --provisioned-throughput \
         ReadCapacityUnits=5,WriteCapacityUnits=5 \
-    --endpoint-url http://localhost:4566
+    --endpoint-url http://localhost:4566 > /dev/null
 
 aws dynamodb create-table \
     --table-name pp-user-score \
     --attribute-definitions \
         AttributeName=id,AttributeType=S \
-        AttributeName=userID,AttributeType=S \
     --key-schema \
         AttributeName=id,KeyType=HASH \
     --provisioned-throughput \
         ReadCapacityUnits=5,WriteCapacityUnits=5 \
-    --endpoint-url http://localhost:4566
+    --endpoint-url http://localhost:4566 > /dev/null
 
 
 echo tabelas criadas:
@@ -69,8 +63,8 @@ echo criando buckets
 
 aws s3api create-bucket \
     --bucket pp-user-pictures \
-    --endpoint-url http://localhost:4566
+    --endpoint-url http://localhost:4566 > /dev/null
 
 aws s3api create-bucket \
     --bucket pp-promotion-images \
-    --endpoint-url http://localhost:4566
+    --endpoint-url http://localhost:4566 > /dev/null

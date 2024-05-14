@@ -46,6 +46,7 @@ func (r *controller) CreateUser(ctx *gin.Context) {
 		return
 	}
 
+	ctx.JSON(http.StatusOK, gin.H{"user": user})
 	ctx.Status(http.StatusOK)
 }
 

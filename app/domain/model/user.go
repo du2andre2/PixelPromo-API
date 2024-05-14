@@ -3,7 +3,7 @@ package model
 import "time"
 
 type User struct {
-	ID         string    `json:"id"` //PK
+	ID         string    `json:"id" dynamodbav:"id"` //PK
 	Email      string    `json:"email"`
 	Name       string    `json:"name"`
 	Password   string    `json:"password"`
