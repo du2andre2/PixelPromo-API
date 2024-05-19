@@ -91,7 +91,7 @@ func (r *controller) GetUserByID(ctx *gin.Context) {
 		return
 	}
 
-	user, err := r.repository.GetUserByID(id)
+	user, err := r.repository.GetUserByID(ctx, id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.Error{Err: err})
 		return

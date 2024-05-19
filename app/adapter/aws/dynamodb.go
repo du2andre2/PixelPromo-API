@@ -154,12 +154,15 @@ func (d dynamoDB) GetItem(ctx context.Context, input *GetItemInput) (*GetItemOut
 		return nil, err
 	}
 
-	var output interface{}
-	if len(result.Item) > 0 {
-		if err := attributevalue.UnmarshalMap(result.Item, &output); err != nil {
-			return nil, err
-		}
+	if result == nil || result.Item == nil || len(result.Item) == 0 {
+		return nil, nil
 	}
+
+	var output interface{}
+	if err := attributevalue.UnmarshalMap(result.Item, &output); err != nil {
+		return nil, err
+	}
+
 	byteOutput, err := json.Marshal(output)
 	if err != nil {
 		return nil, err

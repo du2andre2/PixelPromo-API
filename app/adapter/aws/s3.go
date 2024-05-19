@@ -2,7 +2,9 @@ package aws
 
 import (
 	"context"
+	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"io"
 	"io/ioutil"
@@ -66,14 +68,23 @@ type PutFileOutput struct {
 }
 
 func (d *bucketS3) PutFile(ctx context.Context, input *PutFileInput) (*PutFileOutput, error) {
-	_, err := d.api.PutObject(ctx, &s3.PutObjectInput{
+	uploader := manager.NewUploader(d.api)
+
+	out, err := uploader.Upload(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(input.BucketName),
 		Key:    aws.String(input.FileName),
 		Body:   input.BodyItem,
 	})
+
 	if err != nil {
 		return nil, err
 	}
 
-	return &PutFileOutput{}, nil
+	if out == nil {
+		return nil, fmt.Errorf("failed to upload file")
+	}
+
+	return &PutFileOutput{
+		UrlFile: out.Location,
+	}, nil
 }

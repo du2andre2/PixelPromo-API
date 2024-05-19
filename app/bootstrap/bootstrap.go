@@ -16,6 +16,7 @@ var AdapterModule = fx.Module("adapter",
 		aws.NewBucketS3,
 		aws.NewConfigAWS,
 		config.NewConfig,
+		config.NewLogger,
 	),
 )
 

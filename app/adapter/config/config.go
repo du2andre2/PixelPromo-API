@@ -18,13 +18,13 @@ func NewConfig() *Config {
 
 	err := viper.ReadInConfig()
 	if err != nil {
-		panic(fmt.Errorf("Erro fatal no arquivo de configuração: %w \n", err))
+		panic(err)
 	}
-	viper := viper.GetViper()
-	env := getEnv(viper)
+	getViper := viper.GetViper()
+	env := getEnv(getViper)
 
 	return &Config{
-		Viper: viper,
+		Viper: getViper,
 		Env:   env,
 	}
 }
