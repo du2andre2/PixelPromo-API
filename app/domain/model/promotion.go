@@ -9,7 +9,7 @@ type Promotion struct {
 	Description string    `json:"description" dynamodbav:"description"`
 	ImageUrl    string    `json:"imageUrl" dynamodbav:"imageUrl"`
 	Link        string    `json:"link" dynamodbav:"link"`
-	CategoryIDs []string  `json:"category" dynamodbav:"categoryIds"`
+	CategoryIDs []string  `json:"categoryIds" dynamodbav:"categoryIds"`
 	CreatedAt   time.Time `json:"createdAt" dynamodbav:"createdAt"`
 }
 

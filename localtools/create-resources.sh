@@ -2,6 +2,8 @@
 docker-compose down
 docker-compose up -d
 
+sleep 5
+
 echo Criando Tabelas
 
 aws dynamodb create-table \

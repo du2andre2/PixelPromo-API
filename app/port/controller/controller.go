@@ -36,18 +36,17 @@ func (r *controller) CreateUser(ctx *gin.Context) {
 	var user model.User
 	err := ctx.ShouldBindJSON(&user)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.Error{Err: err})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
 	}
 
 	err = r.repository.CreateUser(ctx, &user)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.Error{Err: err})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"user": user})
-	ctx.Status(http.StatusOK)
+	ctx.IndentedJSON(http.StatusOK, user)
 }
 
 func (r *controller) UpdateUserPicture(ctx *gin.Context) {
@@ -60,7 +59,7 @@ func (r *controller) UpdateUserPicture(ctx *gin.Context) {
 
 	f, fh, err := ctx.Request.FormFile("picture")
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.Error{Err: err})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
 	}
 
@@ -76,7 +75,7 @@ func (r *controller) UpdateUserPicture(ctx *gin.Context) {
 
 	err = r.repository.UpdateUserPicture(ctx, id, fileBytes)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.Error{Err: err})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
 	}
 
@@ -93,7 +92,7 @@ func (r *controller) GetUserByID(ctx *gin.Context) {
 
 	user, err := r.repository.GetUserByID(ctx, id)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.Error{Err: err})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
 	}
 
@@ -103,8 +102,6 @@ func (r *controller) GetUserByID(ctx *gin.Context) {
 	}
 
 	ctx.IndentedJSON(http.StatusOK, user)
-	return
-
 }
 
 func (r *controller) CreatePromotion(ctx *gin.Context) {
@@ -112,23 +109,30 @@ func (r *controller) CreatePromotion(ctx *gin.Context) {
 	var promotion model.Promotion
 	err := ctx.ShouldBindJSON(&promotion)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.Error{Err: err})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
 	}
 
 	err = r.repository.CreatePromotion(ctx, &promotion)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.Error{Err: err})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
 	}
 
-	ctx.Status(http.StatusOK)
+	ctx.IndentedJSON(http.StatusOK, promotion)
 }
 
 func (r *controller) UpdatePromotionImage(ctx *gin.Context) {
+	id := ctx.Param("id")
+
+	if len(strings.TrimSpace(id)) == 0 {
+		ctx.Writer.WriteHeader(http.StatusNotFound)
+		return
+	}
+
 	f, fh, err := ctx.Request.FormFile("image")
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.Error{Err: err})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
 	}
 
@@ -142,9 +146,9 @@ func (r *controller) UpdatePromotionImage(ctx *gin.Context) {
 
 	fileBytes := bytes.NewReader(buffer)
 
-	err = r.repository.UpdatePromotionImage(ctx, fileBytes)
+	err = r.repository.UpdatePromotionImage(ctx, id, fileBytes)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.Error{Err: err})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
 	}
 
@@ -159,9 +163,9 @@ func (r *controller) GetPromotionByID(ctx *gin.Context) {
 		return
 	}
 
-	user, err := r.repository.GetPromotionByID(id)
+	user, err := r.repository.GetPromotionByID(ctx, id)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.Error{Err: err})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
 	}
 

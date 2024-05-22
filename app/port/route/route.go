@@ -33,7 +33,7 @@ func (r *route) Setup(router *gin.Engine) {
 	promotionGroup := router.Group("/promotions")
 	{
 		promotionGroup.POST("/", r.controller.CreatePromotion)
-		userGroup.POST("/image/:id", r.controller.UpdatePromotionImage)
+		promotionGroup.POST("/image/:id", r.controller.UpdatePromotionImage)
 		promotionGroup.GET("/:id", r.controller.GetPromotionByID)
 	}
 
