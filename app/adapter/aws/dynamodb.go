@@ -371,8 +371,12 @@ func (d dynamoDB) ScanItem(ctx context.Context, input *ScanItemInput) (*ScanItem
 		return nil, err
 	}
 
+	if outputScan == nil || len(outputScan.Items) == 0 {
+		return nil, nil
+	}
+
 	var outputsInterface []interface{}
-	if err := attributevalue.UnmarshalListOfMaps(outputScan.Items, outputsInterface); err != nil {
+	if err := attributevalue.UnmarshalListOfMaps(outputScan.Items, &outputsInterface); err != nil {
 		return nil, err
 	}
 
@@ -394,6 +398,10 @@ func (d dynamoDB) ScanItem(ctx context.Context, input *ScanItemInput) (*ScanItem
 }
 
 func (d dynamoDB) buildQueryExpression(conditions []ConditionParam) (expression.Expression, error) {
+
+	if conditions == nil || len(conditions) == 0 {
+		return expression.Expression{}, nil
+	}
 
 	filterExpr := expression.ConditionBuilder{}
 

@@ -9,12 +9,11 @@ type Promotion struct {
 	Description string    `json:"description" dynamodbav:"description"`
 	ImageUrl    string    `json:"imageUrl" dynamodbav:"imageUrl"`
 	Link        string    `json:"link" dynamodbav:"link"`
-	CategoryIDs []string  `json:"categoryIds" dynamodbav:"categoryIds"`
+	Categories  []string  `json:"categories" dynamodbav:"categories"`
 	CreatedAt   time.Time `json:"createdAt" dynamodbav:"createdAt"`
 }
 
 type Category struct {
-	ID   string `json:"id" dynamodbav:"id"` //PK
 	Name string `json:"name" dynamodbav:"name"`
 }
 
@@ -27,10 +26,19 @@ type PromotionInteraction struct {
 	InteractionDate time.Time       `json:"interactionDate" dynamodbav:"interactionDate"`
 }
 
+func (p *PromotionInteraction) IsValidType() bool {
+	switch p.Type {
+	case Create, Comment, Favorite, Like:
+		return true
+	default:
+		return false
+	}
+}
+
 type InteractionType string
 
 const (
-	Favorite InteractionType = "favorited"
+	Favorite InteractionType = "favorite"
 	Like     InteractionType = "like"
 	Comment  InteractionType = "comment"
 	Create   InteractionType = "create"

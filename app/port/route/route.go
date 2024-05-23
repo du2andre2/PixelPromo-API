@@ -35,6 +35,13 @@ func (r *route) Setup(router *gin.Engine) {
 		promotionGroup.POST("/", r.controller.CreatePromotion)
 		promotionGroup.POST("/image/:id", r.controller.UpdatePromotionImage)
 		promotionGroup.GET("/:id", r.controller.GetPromotionByID)
+		promotionGroup.GET("/categories/:category", r.controller.GetPromotionByCategory)
+		promotionGroup.GET("/categories", r.controller.GetCategories)
+	}
+
+	interactionGroup := router.Group("/interactions")
+	{
+		interactionGroup.POST("/", r.controller.CreateInteraction)
 	}
 
 	return

@@ -15,6 +15,8 @@ import (
 )
 
 type Repository interface {
+	CreateInteraction(context.Context, *model.PromotionInteraction) error
+
 	CreateUser(context.Context, *model.User) error
 	UpdateUserPicture(context.Context, string, io.Reader) error
 	GetUserByID(context.Context, string) (*model.User, error)
@@ -22,6 +24,8 @@ type Repository interface {
 	CreatePromotion(context.Context, *model.Promotion) error
 	UpdatePromotionImage(context.Context, string, io.Reader) error
 	GetPromotionByID(context.Context, string) (*model.Promotion, error)
+	GetPromotionByCategory(context.Context, string) ([]model.Promotion, error)
+	GetCategories(context.Context) ([]model.Category, error)
 }
 
 func NewRepository(
@@ -43,6 +47,30 @@ type repository struct {
 	s3  aws.BucketS3
 	cfg *config.Config
 	log config.Logger
+}
+
+func (r *repository) CreateInteraction(ctx context.Context, interaction *model.PromotionInteraction) error {
+
+	err := r.validInteraction(ctx, interaction)
+	if err != nil {
+		r.log.Error(err.Error())
+		return err
+	}
+
+	interaction.InteractionDate = time.Now()
+	interaction.ID = fmt.Sprintf("%d", interaction.InteractionDate.UnixNano())
+
+	if err = r.db.PutItem(ctx,
+		&aws.PutItemInput{
+			TableName: r.cfg.Viper.GetString("aws.dynamodb.tables.promotion-interaction"),
+			BodyItem:  interaction,
+		}); err != nil {
+		r.log.Error(err.Error())
+		return err
+	}
+
+	r.log.Debug("interaction created")
+	return nil
 }
 
 func (r *repository) CreateUser(ctx context.Context, user *model.User) error {
@@ -261,14 +289,81 @@ func (r *repository) GetPromotionByID(ctx context.Context, id string) (*model.Pr
 		return nil, nil
 	}
 
-	user := &model.Promotion{}
-	err = json.Unmarshal(out.Item, user)
+	promotion := &model.Promotion{}
+	err = json.Unmarshal(out.Item, promotion)
 	if err != nil {
 		r.log.Error(err.Error())
 		return nil, err
 	}
 
-	return user, nil
+	return promotion, nil
+}
+
+func (r *repository) GetPromotionByCategory(ctx context.Context, category string) ([]model.Promotion, error) {
+	out, err := r.db.ScanItem(ctx,
+		&aws.ScanItemInput{
+			TableName: r.cfg.Viper.GetString("aws.dynamodb.tables.promotion"),
+			Conditions: []aws.ConditionParam{
+				{
+					Name:          "categories",
+					Value:         category,
+					OperationType: aws.Contains,
+				},
+			},
+		})
+
+	if err != nil {
+		r.log.Error(err.Error())
+		return nil, err
+	}
+
+	if out == nil || out.Items == nil || len(out.Items) == 0 {
+		return nil, nil
+	}
+
+	var promotions []model.Promotion
+
+	for _, out := range out.Items {
+		promotion := model.Promotion{}
+		err = json.Unmarshal(out.Item, &promotion)
+		if err != nil {
+			r.log.Error(err.Error())
+			return nil, err
+		}
+		promotions = append(promotions, promotion)
+	}
+
+	return promotions, nil
+}
+
+func (r *repository) GetCategories(ctx context.Context) ([]model.Category, error) {
+	out, err := r.db.ScanItem(ctx,
+		&aws.ScanItemInput{
+			TableName: r.cfg.Viper.GetString("aws.dynamodb.tables.category"),
+		})
+
+	if err != nil {
+		r.log.Error(err.Error())
+		return nil, err
+	}
+
+	if out == nil || out.Items == nil || len(out.Items) == 0 {
+		return nil, nil
+	}
+
+	var categories []model.Category
+
+	for _, out := range out.Items {
+		category := model.Category{}
+		err = json.Unmarshal(out.Item, &category)
+		if err != nil {
+			r.log.Error(err.Error())
+			return nil, err
+		}
+		categories = append(categories, category)
+	}
+
+	return categories, nil
 }
 
 func (r *repository) validUser(user *model.User) error {
@@ -307,6 +402,14 @@ func (r *repository) validPromotion(ctx context.Context, promotion *model.Promot
 		return errors.New("userID is empty")
 	}
 
+	if len(promotion.Categories) > 0 {
+		for _, category := range promotion.Categories {
+			if len(strings.TrimSpace(category)) == 0 {
+				return errors.New("category name is empty")
+			}
+		}
+	}
+
 	out, err := r.db.GetItem(ctx,
 		&aws.GetItemInput{
 			TableName: r.cfg.Viper.GetString("aws.dynamodb.tables.user"),
@@ -320,6 +423,70 @@ func (r *repository) validPromotion(ctx context.Context, promotion *model.Promot
 
 	if out == nil || out.Item == nil {
 		err = errors.New("user not found")
+		r.log.Error(err.Error())
+		return err
+	}
+
+	return nil
+}
+
+func (r *repository) validInteraction(ctx context.Context, interaction *model.PromotionInteraction) error {
+	if interaction == nil {
+		return errors.New("interaction is nil")
+	}
+
+	if len(strings.TrimSpace(interaction.UserID)) == 0 {
+		return errors.New("userId is empty")
+	}
+
+	if len(strings.TrimSpace(interaction.PromotionID)) == 0 {
+		return errors.New("promotionId is empty")
+	}
+
+	if len(strings.TrimSpace(string(interaction.Type))) == 0 {
+		return errors.New("type is empty")
+	}
+
+	if !interaction.IsValidType() {
+		return errors.New("type is invalid")
+	}
+
+	if interaction.Type == model.Comment {
+		if len(strings.TrimSpace(interaction.Comment)) == 0 {
+			return errors.New("comment is empty")
+		}
+	}
+
+	user, err := r.db.GetItem(ctx,
+		&aws.GetItemInput{
+			TableName: r.cfg.Viper.GetString("aws.dynamodb.tables.user"),
+			Keys: []aws.Key{
+				{
+					Name:      "id",
+					Value:     interaction.UserID,
+					ValueType: aws.String},
+			},
+		})
+
+	if user == nil || user.Item == nil {
+		err = errors.New("user not found")
+		r.log.Error(err.Error())
+		return err
+	}
+
+	promotion, err := r.db.GetItem(ctx,
+		&aws.GetItemInput{
+			TableName: r.cfg.Viper.GetString("aws.dynamodb.tables.promotion"),
+			Keys: []aws.Key{
+				{
+					Name:      "id",
+					Value:     interaction.PromotionID,
+					ValueType: aws.String},
+			},
+		})
+
+	if promotion == nil || promotion.Item == nil {
+		err = errors.New("promotion not found")
 		r.log.Error(err.Error())
 		return err
 	}

@@ -12,11 +12,14 @@ import (
 
 type Controller interface {
 	CreateUser(*gin.Context)
+	CreateInteraction(*gin.Context)
 	UpdateUserPicture(ctx *gin.Context)
 	GetUserByID(ctx *gin.Context)
 	CreatePromotion(*gin.Context)
 	UpdatePromotionImage(ctx *gin.Context)
 	GetPromotionByID(ctx *gin.Context)
+	GetPromotionByCategory(ctx *gin.Context)
+	GetCategories(ctx *gin.Context)
 }
 
 type controller struct {
@@ -29,6 +32,24 @@ func NewController(
 	return &controller{
 		repository: repository,
 	}
+}
+
+func (r *controller) CreateInteraction(ctx *gin.Context) {
+
+	var interaction model.PromotionInteraction
+	err := ctx.ShouldBindJSON(&interaction)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
+		return
+	}
+
+	err = r.repository.CreateInteraction(ctx, &interaction)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
+		return
+	}
+
+	ctx.IndentedJSON(http.StatusOK, interaction)
 }
 
 func (r *controller) CreateUser(ctx *gin.Context) {
@@ -175,6 +196,46 @@ func (r *controller) GetPromotionByID(ctx *gin.Context) {
 	}
 
 	ctx.IndentedJSON(http.StatusOK, user)
+	return
+}
+
+func (r *controller) GetPromotionByCategory(ctx *gin.Context) {
+	category := ctx.Param("category")
+
+	if len(strings.TrimSpace(category)) == 0 {
+		ctx.Writer.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	promotions, err := r.repository.GetPromotionByCategory(ctx, category)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
+		return
+	}
+
+	if promotions == nil || len(promotions) == 0 {
+		ctx.Writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	ctx.IndentedJSON(http.StatusOK, promotions)
+	return
+}
+
+func (r *controller) GetCategories(ctx *gin.Context) {
+
+	categories, err := r.repository.GetCategories(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
+		return
+	}
+
+	if categories == nil || len(categories) == 0 {
+		ctx.Writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	ctx.IndentedJSON(http.StatusOK, categories)
 	return
 }
 
