@@ -16,7 +16,7 @@ type DynamoDB interface {
 	DeleteItem(context.Context, *DeleteItemInput) error
 	UpdateItem(context.Context, *UpdateItemInput) error
 	BatchGetItem(context.Context, *BatchGetItemInput) (*BatchGetItemOutput, error)
-	BatchPutItem(context.Context, *BatchPutItemInput) error
+	BatchPutItem(context.Context, []PutItemInput) error
 	QueryItem(context.Context, *QueryItemInput) (*QueryItemOutput, error)
 	ScanItem(context.Context, *ScanItemInput) (*ScanItemOutput, error)
 }
@@ -93,6 +93,7 @@ type OperationType int
 
 const (
 	Equal OperationType = iota
+	GreaterThanEqual
 	Contains
 	BeginsWith
 )
@@ -105,10 +106,10 @@ type BatchGetItemOutput struct {
 	Items []GetItemOutput
 }
 
-type BatchPutItemInput struct {
-	TableName string
-	Items     []interface{}
-}
+//type BatchPutItemInput struct {
+//	TableName string
+//	Items     []interface{}
+//}
 
 type QueryItemInput struct {
 	TableName  string
@@ -302,11 +303,11 @@ func (d dynamoDB) BatchGetItem(ctx context.Context, input *BatchGetItemInput) (*
 	return output, nil
 }
 
-func (d dynamoDB) BatchPutItem(ctx context.Context, input *BatchPutItemInput) error {
+func (d dynamoDB) BatchPutItem(ctx context.Context, inputs []PutItemInput) error {
 	inputAws := dynamodb.TransactWriteItemsInput{}
 
-	for _, param := range input.Items {
-		item, err := attributevalue.MarshalMap(param)
+	for _, input := range inputs {
+		item, err := attributevalue.MarshalMap(input.BodyItem)
 		if err != nil {
 			return err
 		}
@@ -412,6 +413,11 @@ func (d dynamoDB) buildQueryExpression(conditions []ConditionParam) (expression.
 				filterExpr = expression.Name(condition.Name).Equal(expression.Value(condition.Value))
 			}
 			filterExpr = filterExpr.And(expression.Name(condition.Name).Equal(expression.Value(condition.Value)))
+		case GreaterThanEqual:
+			if i == 0 {
+				filterExpr = expression.Name(condition.Name).GreaterThanEqual(expression.Value(condition.Value))
+			}
+			filterExpr = filterExpr.And(expression.Name(condition.Name).GreaterThanEqual(expression.Value(condition.Value)))
 		case BeginsWith:
 			if i == 0 {
 				filterExpr = expression.Name(condition.Name).BeginsWith(condition.Value.(string))
@@ -450,6 +456,11 @@ func (d dynamoDB) buildUpdateExpression(actions []ActionParam, conditions []Cond
 				conditionExpr = expression.Name(condition.Name).Equal(expression.Value(condition.Value))
 			}
 			conditionExpr = conditionExpr.And(expression.Name(condition.Name).Equal(expression.Value(condition.Value)))
+		case GreaterThanEqual:
+			if i == 0 {
+				conditionExpr = expression.Name(condition.Name).GreaterThanEqual(expression.Value(condition.Value))
+			}
+			conditionExpr = conditionExpr.And(expression.Name(condition.Name).GreaterThanEqual(expression.Value(condition.Value)))
 		case BeginsWith:
 			if i == 0 {
 				conditionExpr = expression.Name(condition.Name).BeginsWith(condition.Value.(string))

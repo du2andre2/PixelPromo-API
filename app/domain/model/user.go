@@ -9,7 +9,7 @@ type User struct {
 	Password   string    `json:"password" dynamodbav:"password"`
 	PictureUrl string    `json:"pictureUrl" dynamodbav:"pictureUrl"`
 	TotalScore int       `json:"totalScore" dynamodbav:"totalScore"`
-	Level      string    `json:"level" dynamodbav:"level"`
+	Level      int       `json:"level" dynamodbav:"level"`
 	Elo        string    `json:"elo" dynamodbav:"elo"`
 	CreatedAt  time.Time `json:"createdAt" dynamodbav:"createdAt"`
 }

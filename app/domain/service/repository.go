@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"pixelPromo/adapter/aws"
 	"pixelPromo/adapter/config"
 	"pixelPromo/domain/model"
@@ -51,8 +52,59 @@ type repository struct {
 
 func (r *repository) CreateInteraction(ctx context.Context, interaction *model.PromotionInteraction) error {
 
-	err := r.validInteraction(ctx, interaction)
+	err := r.validInteraction(interaction)
 	if err != nil {
+		r.log.Error(err.Error())
+		return err
+	}
+
+	userItem, err := r.db.GetItem(ctx,
+		&aws.GetItemInput{
+			TableName: r.cfg.Viper.GetString("aws.dynamodb.tables.user"),
+			Keys: []aws.Key{
+				{
+					Name:      "id",
+					Value:     interaction.UserID,
+					ValueType: aws.String},
+			},
+		})
+
+	if userItem == nil || userItem.Item == nil {
+		err = errors.New("user not found")
+		r.log.Error(err.Error())
+		return err
+	}
+
+	ownerItem, err := r.db.GetItem(ctx,
+		&aws.GetItemInput{
+			TableName: r.cfg.Viper.GetString("aws.dynamodb.tables.user"),
+			Keys: []aws.Key{
+				{
+					Name:      "id",
+					Value:     interaction.OwnerUserID,
+					ValueType: aws.String},
+			},
+		})
+
+	if ownerItem == nil || ownerItem.Item == nil {
+		err = errors.New("ownerUser not found")
+		r.log.Error(err.Error())
+		return err
+	}
+
+	promotionItem, err := r.db.GetItem(ctx,
+		&aws.GetItemInput{
+			TableName: r.cfg.Viper.GetString("aws.dynamodb.tables.promotion"),
+			Keys: []aws.Key{
+				{
+					Name:      "id",
+					Value:     interaction.PromotionID,
+					ValueType: aws.String},
+			},
+		})
+
+	if promotionItem == nil || promotionItem.Item == nil {
+		err = errors.New("promotion not found")
 		r.log.Error(err.Error())
 		return err
 	}
@@ -60,16 +112,43 @@ func (r *repository) CreateInteraction(ctx context.Context, interaction *model.P
 	interaction.InteractionDate = time.Now()
 	interaction.ID = fmt.Sprintf("%d", interaction.InteractionDate.UnixNano())
 
-	if err = r.db.PutItem(ctx,
-		&aws.PutItemInput{
-			TableName: r.cfg.Viper.GetString("aws.dynamodb.tables.promotion-interaction"),
-			BodyItem:  interaction,
+	score, err := r.CreateUserScoreByInteraction(interaction)
+	if err != nil {
+		r.log.Error(err.Error())
+		return err
+	}
+
+	owner := &model.User{}
+	err = json.Unmarshal(ownerItem.Item, owner)
+	if err != nil {
+		r.log.Error(err.Error())
+		return err
+	}
+
+	owner, err = r.EditUserStatisticByScore(ctx, owner, score)
+	if err != nil {
+		r.log.Error(err.Error())
+		return err
+	}
+
+	if err = r.db.BatchPutItem(ctx,
+		[]aws.PutItemInput{
+			{
+				TableName: r.cfg.Viper.GetString("aws.dynamodb.tables.promotion-interaction"),
+				BodyItem:  interaction,
+			}, {
+				TableName: r.cfg.Viper.GetString("aws.dynamodb.tables.user-score"),
+				BodyItem:  score,
+			}, {
+				TableName: r.cfg.Viper.GetString("aws.dynamodb.tables.user"),
+				BodyItem:  owner,
+			},
 		}); err != nil {
 		r.log.Error(err.Error())
 		return err
 	}
 
-	r.log.Debug("interaction created")
+	r.log.Debug("interaction and score created")
 	return nil
 }
 
@@ -430,13 +509,21 @@ func (r *repository) validPromotion(ctx context.Context, promotion *model.Promot
 	return nil
 }
 
-func (r *repository) validInteraction(ctx context.Context, interaction *model.PromotionInteraction) error {
+func (r *repository) validInteraction(interaction *model.PromotionInteraction) error {
 	if interaction == nil {
 		return errors.New("interaction is nil")
 	}
 
 	if len(strings.TrimSpace(interaction.UserID)) == 0 {
 		return errors.New("userId is empty")
+	}
+
+	if len(strings.TrimSpace(interaction.OwnerUserID)) == 0 {
+		return errors.New("ownerUserId is empty")
+	}
+
+	if interaction.OwnerUserID == interaction.UserID {
+		return errors.New("owner cannot interact with the promotion")
 	}
 
 	if len(strings.TrimSpace(interaction.PromotionID)) == 0 {
@@ -457,41 +544,111 @@ func (r *repository) validInteraction(ctx context.Context, interaction *model.Pr
 		}
 	}
 
-	user, err := r.db.GetItem(ctx,
-		&aws.GetItemInput{
-			TableName: r.cfg.Viper.GetString("aws.dynamodb.tables.user"),
-			Keys: []aws.Key{
-				{
-					Name:      "id",
-					Value:     interaction.UserID,
-					ValueType: aws.String},
-			},
-		})
-
-	if user == nil || user.Item == nil {
-		err = errors.New("user not found")
-		r.log.Error(err.Error())
-		return err
-	}
-
-	promotion, err := r.db.GetItem(ctx,
-		&aws.GetItemInput{
-			TableName: r.cfg.Viper.GetString("aws.dynamodb.tables.promotion"),
-			Keys: []aws.Key{
-				{
-					Name:      "id",
-					Value:     interaction.PromotionID,
-					ValueType: aws.String},
-			},
-		})
-
-	if promotion == nil || promotion.Item == nil {
-		err = errors.New("promotion not found")
-		r.log.Error(err.Error())
-		return err
-	}
-
 	return nil
+}
+
+func (r *repository) CreateUserScoreByInteraction(interaction *model.PromotionInteraction) (*model.UserScore, error) {
+
+	var score model.UserScore
+
+	score.ScoreDate = time.Now()
+	score.ID = fmt.Sprintf("%d", score.ScoreDate.UnixNano())
+	score.UserID = interaction.OwnerUserID
+
+	points, err := r.getPointsByInteractionType(interaction.Type)
+	if err != nil {
+		return nil, err
+	}
+	score.Points = points
+
+	return &score, nil
+}
+
+func (r *repository) getPointsByInteractionType(interactionType model.InteractionType) (int, error) {
+	points := r.cfg.Viper.GetInt(fmt.Sprintf("service.score.interactions.%s", interactionType))
+	if points <= 0 {
+		return 0, errors.New("interaction points not found")
+	}
+	return points, nil
+}
+
+func (r *repository) EditUserStatisticByScore(ctx context.Context, user *model.User, score *model.UserScore) (*model.User, error) {
+
+	newLevel := calculateLevel(user, score.Points)
+	newElo, err := r.calculateElo(ctx, user, score.Points)
+	if err != nil {
+		return nil, err
+	}
+
+	user.TotalScore += score.Points
+	user.Elo = newElo
+	user.Level = newLevel
+	return user, nil
+}
+
+func (r *repository) calculateElo(ctx context.Context, user *model.User, newPoints int) (string, error) {
+
+	rangeInDays := -7
+	dateRange := time.Now().AddDate(0, 0, rangeInDays)
+	out, err := r.db.ScanItem(ctx,
+		&aws.ScanItemInput{
+			TableName: r.cfg.Viper.GetString("aws.dynamodb.tables.user-score"),
+			Conditions: []aws.ConditionParam{
+				{
+					Name:          "userId",
+					Value:         user.ID,
+					OperationType: aws.Equal,
+				},
+				{
+					Name:          "scoreDate",
+					Value:         dateRange,
+					OperationType: aws.GreaterThanEqual,
+				},
+			},
+		})
+
+	if err != nil {
+		r.log.Error(err.Error())
+		return "", err
+	}
+
+	var pointsInRange int
+	pointsInRange += newPoints
+
+	if !(out == nil || out.Items == nil || len(out.Items) == 0) {
+		for _, out := range out.Items {
+			userScore := model.UserScore{}
+			err = json.Unmarshal(out.Item, &userScore)
+			if err != nil {
+				r.log.Error(err.Error())
+				return "", err
+			}
+			pointsInRange += userScore.Points
+		}
+	}
+
+	if pointsInRange >= 100 { //todo:refactor this
+		return "silver", nil
+	} else if pointsInRange >= 25 {
+		return "bronze", nil
+	} else {
+		return "none", nil
+	}
+}
+
+func pointsRequiredForLevel(level int) int {
+	minimalPointsLevel := 10
+	growthRate := 1.30
+	return int(float64(minimalPointsLevel) * math.Pow(growthRate, float64(level-1)))
+}
+
+func calculateLevel(user *model.User, points int) int {
+	currentLevel := user.Level //todo: refactor this
+	for points >= pointsRequiredForLevel(currentLevel) {
+		points -= pointsRequiredForLevel(currentLevel)
+		currentLevel++
+	}
+	return currentLevel
 }
 
 func isEmailValid(e string) bool {
