@@ -20,6 +20,7 @@ type Category struct {
 type PromotionInteraction struct {
 	ID              string          `json:"id" dynamodbav:"id"` //PK
 	PromotionID     string          `json:"promotionId" dynamodbav:"promotionId"`
+	OwnerUserID     string          `json:"ownerUserId" dynamodbav:"ownerUserId"`
 	UserID          string          `json:"userId" dynamodbav:"userId"`
 	Comment         string          `json:"comment" dynamodbav:"comment"`
 	Type            InteractionType `json:"type" dynamodbav:"type"`
