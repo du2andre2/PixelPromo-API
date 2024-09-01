@@ -18,6 +18,7 @@ type Controller interface {
 	CreatePromotion(*gin.Context)
 	UpdatePromotionImage(ctx *gin.Context)
 	GetPromotionByID(ctx *gin.Context)
+	GetAllPromotions(ctx *gin.Context)
 	GetPromotionByCategory(ctx *gin.Context)
 	GetCategories(ctx *gin.Context)
 }
@@ -184,18 +185,35 @@ func (r *controller) GetPromotionByID(ctx *gin.Context) {
 		return
 	}
 
-	user, err := r.repository.GetPromotionByID(ctx, id)
+	promotion, err := r.repository.GetPromotionByID(ctx, id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
 	}
 
-	if user == nil {
+	if promotion == nil {
 		ctx.Writer.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	ctx.IndentedJSON(http.StatusOK, user)
+	ctx.IndentedJSON(http.StatusOK, promotion)
+	return
+}
+
+func (r *controller) GetAllPromotions(ctx *gin.Context) {
+
+	promotions, err := r.repository.GetAllPromotions(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
+		return
+	}
+
+	if promotions == nil || len(promotions) == 0 {
+		ctx.Writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	ctx.IndentedJSON(http.StatusOK, promotions)
 	return
 }
 

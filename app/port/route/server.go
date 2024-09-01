@@ -21,5 +21,5 @@ func NewServer(
 func (s *server) Run() {
 	router := gin.Default()
 	s.route.Setup(router)
-	router.Run("localhost:8080")
+	router.Run("localhost:5000")
 }

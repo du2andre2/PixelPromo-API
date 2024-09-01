@@ -25,6 +25,7 @@ type Repository interface {
 	CreatePromotion(context.Context, *model.Promotion) error
 	UpdatePromotionImage(context.Context, string, io.Reader) error
 	GetPromotionByID(context.Context, string) (*model.Promotion, error)
+	GetAllPromotions(context.Context) ([]model.Promotion, error)
 	GetPromotionByCategory(context.Context, string) ([]model.Promotion, error)
 	GetCategories(context.Context) ([]model.Category, error)
 }
@@ -376,6 +377,36 @@ func (r *repository) GetPromotionByID(ctx context.Context, id string) (*model.Pr
 	}
 
 	return promotion, nil
+}
+
+func (r *repository) GetAllPromotions(ctx context.Context) ([]model.Promotion, error) {
+	out, err := r.db.ScanItem(ctx,
+		&aws.ScanItemInput{
+			TableName: r.cfg.Viper.GetString("aws.dynamodb.tables.promotion"),
+		})
+
+	if err != nil {
+		r.log.Error(err.Error())
+		return nil, err
+	}
+
+	if out == nil || len(out.Items) == 0 {
+		return nil, nil
+	}
+
+	var promotions []model.Promotion
+
+	for _, out := range out.Items {
+		promotion := model.Promotion{}
+		err = json.Unmarshal(out.Item, &promotion)
+		if err != nil {
+			r.log.Error(err.Error())
+			return nil, err
+		}
+		promotions = append(promotions, promotion)
+	}
+
+	return promotions, nil
 }
 
 func (r *repository) GetPromotionByCategory(ctx context.Context, category string) ([]model.Promotion, error) {
