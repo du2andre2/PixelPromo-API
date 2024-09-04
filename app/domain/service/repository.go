@@ -25,7 +25,7 @@ type Repository interface {
 	CreatePromotion(context.Context, *model.Promotion) error
 	UpdatePromotionImage(context.Context, string, io.Reader) error
 	GetPromotionByID(context.Context, string) (*model.Promotion, error)
-	GetAllPromotions(context.Context) ([]model.Promotion, error)
+	GetAllPromotions(context.Context, model.PromotionQuery) ([]model.Promotion, error)
 	GetPromotionByCategory(context.Context, string) ([]model.Promotion, error)
 	GetCategories(context.Context) ([]model.Category, error)
 }
@@ -379,10 +379,30 @@ func (r *repository) GetPromotionByID(ctx context.Context, id string) (*model.Pr
 	return promotion, nil
 }
 
-func (r *repository) GetAllPromotions(ctx context.Context) ([]model.Promotion, error) {
+func (r *repository) GetAllPromotions(ctx context.Context, params model.PromotionQuery) ([]model.Promotion, error) {
+	var conditions []aws.ConditionParam
+	for _, category := range params.Categories {
+		conditions = append(conditions, aws.ConditionParam{
+			Names:         []string{"categories"},
+			Value:         category,
+			OperationType: aws.Contains,
+		})
+	}
+	if params.Search != "" {
+		conditions = append(conditions,
+			aws.ConditionParam{
+				Names:         []string{"userId", "title", "description", "platform", "categories", "link"},
+				Value:         params.Search,
+				OperationType: aws.Contains,
+			},
+		)
+	}
+
 	out, err := r.db.ScanItem(ctx,
 		&aws.ScanItemInput{
-			TableName: r.cfg.Viper.GetString("aws.dynamodb.tables.promotion"),
+			TableName:          r.cfg.Viper.GetString("aws.dynamodb.tables.promotion"),
+			Conditions:         conditions,
+			ConditionConstrain: aws.ANYCondition,
 		})
 
 	if err != nil {
@@ -415,7 +435,7 @@ func (r *repository) GetPromotionByCategory(ctx context.Context, category string
 			TableName: r.cfg.Viper.GetString("aws.dynamodb.tables.promotion"),
 			Conditions: []aws.ConditionParam{
 				{
-					Name:          "categories",
+					Names:         []string{"categories"},
 					Value:         category,
 					OperationType: aws.Contains,
 				},
@@ -626,12 +646,12 @@ func (r *repository) calculateElo(ctx context.Context, user *model.User, newPoin
 			TableName: r.cfg.Viper.GetString("aws.dynamodb.tables.user-score"),
 			Conditions: []aws.ConditionParam{
 				{
-					Name:          "userId",
+					Names:         []string{"userId"},
 					Value:         user.ID,
 					OperationType: aws.Equal,
 				},
 				{
-					Name:          "scoreDate",
+					Names:         []string{"scoreDate"},
 					Value:         dateRange,
 					OperationType: aws.GreaterThanEqual,
 				},

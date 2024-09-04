@@ -48,3 +48,8 @@ const (
 	Comment  InteractionType = "comment"
 	Create   InteractionType = "create"
 )
+
+type PromotionQuery struct {
+	Categories []string `json:"category"`
+	Search     string   `json:"search"`
+}

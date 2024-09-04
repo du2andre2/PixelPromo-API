@@ -202,7 +202,14 @@ func (r *controller) GetPromotionByID(ctx *gin.Context) {
 
 func (r *controller) GetAllPromotions(ctx *gin.Context) {
 
-	promotions, err := r.repository.GetAllPromotions(ctx)
+	categories, _ := ctx.GetQueryArray("category")
+	search, _ := ctx.GetQuery("search")
+
+	params := model.PromotionQuery{
+		Search:     search,
+		Categories: categories,
+	}
+	promotions, err := r.repository.GetAllPromotions(ctx, params)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return

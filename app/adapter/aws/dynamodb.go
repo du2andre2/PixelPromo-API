@@ -65,10 +65,11 @@ type DeleteItemInput struct {
 }
 
 type UpdateItemInput struct {
-	TableName  string
-	Keys       []Key
-	Conditions []ConditionParam
-	Actions    []ActionParam
+	TableName          string
+	Keys               []Key
+	Conditions         []ConditionParam
+	Actions            []ActionParam
+	ConditionConstrain ConditionConstrainType
 }
 
 type ActionParam struct {
@@ -83,11 +84,22 @@ const (
 	Set ActionType = iota
 )
 
+const (
+	AllAttributes = "ALL_ATTRIBUTES"
+)
+
 type ConditionParam struct {
-	Name          string
+	Names         []string
 	Value         interface{}
 	OperationType OperationType
 }
+
+type ConditionConstrainType int
+
+const (
+	AllConditions ConditionConstrainType = iota
+	ANYCondition
+)
 
 type OperationType int
 
@@ -106,14 +118,10 @@ type BatchGetItemOutput struct {
 	Items []GetItemOutput
 }
 
-//type BatchPutItemInput struct {
-//	TableName string
-//	Items     []interface{}
-//}
-
 type QueryItemInput struct {
-	TableName  string
-	Conditions []ConditionParam
+	TableName          string
+	ConditionConstrain ConditionConstrainType
+	Conditions         []ConditionParam
 }
 
 type QueryItemOutput struct {
@@ -122,8 +130,9 @@ type QueryItemOutput struct {
 }
 
 type ScanItemInput struct {
-	TableName  string
-	Conditions []ConditionParam
+	TableName          string
+	Conditions         []ConditionParam
+	ConditionConstrain ConditionConstrainType
 }
 
 type ScanItemOutput struct {
@@ -223,7 +232,7 @@ func (d dynamoDB) UpdateItem(ctx context.Context, input *UpdateItemInput) error 
 		}
 	}
 
-	expr, err := d.buildUpdateExpression(input.Actions, input.Conditions)
+	expr, err := d.buildUpdateExpression(input.Actions, input.Conditions, input.ConditionConstrain)
 
 	_, err = d.client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
 		Key:                       keys,
@@ -325,7 +334,7 @@ func (d dynamoDB) BatchPutItem(ctx context.Context, inputs []PutItemInput) error
 }
 
 func (d dynamoDB) QueryItem(ctx context.Context, input *QueryItemInput) (*QueryItemOutput, error) {
-	expr, err := d.buildQueryExpression(input.Conditions)
+	expr, err := d.buildQueryExpression(input.Conditions, input.ConditionConstrain)
 	outputQuery, err := d.client.Query(ctx, &dynamodb.QueryInput{
 		TableName:                 aws.String(input.TableName),
 		ExpressionAttributeValues: expr.Values(),
@@ -360,7 +369,7 @@ func (d dynamoDB) QueryItem(ctx context.Context, input *QueryItemInput) (*QueryI
 }
 
 func (d dynamoDB) ScanItem(ctx context.Context, input *ScanItemInput) (*ScanItemOutput, error) {
-	expr, err := d.buildQueryExpression(input.Conditions)
+	expr, err := d.buildQueryExpression(input.Conditions, input.ConditionConstrain)
 	outputScan, err := d.client.Scan(ctx, &dynamodb.ScanInput{
 		TableName:                 aws.String(input.TableName),
 		ExpressionAttributeValues: expr.Values(),
@@ -398,7 +407,7 @@ func (d dynamoDB) ScanItem(ctx context.Context, input *ScanItemInput) (*ScanItem
 
 }
 
-func (d dynamoDB) buildQueryExpression(conditions []ConditionParam) (expression.Expression, error) {
+func (d dynamoDB) buildQueryExpression(conditions []ConditionParam, constrain ConditionConstrainType) (expression.Expression, error) {
 
 	if conditions == nil || len(conditions) == 0 {
 		return expression.Expression{}, nil
@@ -407,35 +416,50 @@ func (d dynamoDB) buildQueryExpression(conditions []ConditionParam) (expression.
 	filterExpr := expression.ConditionBuilder{}
 
 	for i, condition := range conditions {
-		switch condition.OperationType {
-		case Equal:
-			if i == 0 {
-				filterExpr = expression.Name(condition.Name).Equal(expression.Value(condition.Value))
+		for j, conditionName := range condition.Names {
+			switch condition.OperationType {
+			case Equal:
+				if i == 0 && j == 0 {
+					filterExpr = expression.Name(conditionName).Equal(expression.Value(condition.Value))
+				} else if constrain == ANYCondition {
+					filterExpr = filterExpr.Or(expression.Name(conditionName).Equal(expression.Value(condition.Value)))
+				} else {
+					filterExpr = filterExpr.And(expression.Name(conditionName).Equal(expression.Value(condition.Value)))
+				}
+			case GreaterThanEqual:
+				if i == 0 && j == 0 {
+					filterExpr = expression.Name(conditionName).GreaterThanEqual(expression.Value(condition.Value))
+				} else if constrain == ANYCondition {
+					filterExpr = filterExpr.Or(expression.Name(conditionName).GreaterThanEqual(expression.Value(condition.Value)))
+				} else {
+					filterExpr = filterExpr.And(expression.Name(conditionName).GreaterThanEqual(expression.Value(condition.Value)))
+				}
+			case BeginsWith:
+				if i == 0 && j == 0 {
+					filterExpr = expression.Name(conditionName).BeginsWith(condition.Value.(string))
+				} else if constrain == ANYCondition {
+					filterExpr = filterExpr.Or(expression.Name(conditionName).BeginsWith(condition.Value.(string)))
+				} else {
+					filterExpr = filterExpr.And(expression.Name(conditionName).BeginsWith(condition.Value.(string)))
+				}
+			case Contains:
+				if i == 0 && j == 0 {
+					filterExpr = expression.Name(conditionName).Contains(condition.Value.(string))
+				} else if constrain == ANYCondition {
+					filterExpr = filterExpr.Or(expression.Name(conditionName).Contains(condition.Value.(string)))
+				} else {
+					filterExpr = filterExpr.And(expression.Name(conditionName).Contains(condition.Value.(string)))
+				}
 			}
-			filterExpr = filterExpr.And(expression.Name(condition.Name).Equal(expression.Value(condition.Value)))
-		case GreaterThanEqual:
-			if i == 0 {
-				filterExpr = expression.Name(condition.Name).GreaterThanEqual(expression.Value(condition.Value))
-			}
-			filterExpr = filterExpr.And(expression.Name(condition.Name).GreaterThanEqual(expression.Value(condition.Value)))
-		case BeginsWith:
-			if i == 0 {
-				filterExpr = expression.Name(condition.Name).BeginsWith(condition.Value.(string))
-			}
-			filterExpr = filterExpr.And(expression.Name(condition.Name).BeginsWith(condition.Value.(string)))
-		case Contains:
-			if i == 0 {
-				filterExpr = expression.Name(condition.Name).Contains(condition.Value.(string))
-			}
-			filterExpr = filterExpr.And(expression.Name(condition.Name).Contains(condition.Value.(string)))
 		}
+
 	}
 
 	return expression.NewBuilder().WithFilter(filterExpr).Build()
 
 }
 
-func (d dynamoDB) buildUpdateExpression(actions []ActionParam, conditions []ConditionParam) (expression.Expression, error) {
+func (d dynamoDB) buildUpdateExpression(actions []ActionParam, conditions []ConditionParam, constrain ConditionConstrainType) (expression.Expression, error) {
 	updateExpr := expression.UpdateBuilder{}
 
 	for i, action := range actions {
@@ -450,28 +474,43 @@ func (d dynamoDB) buildUpdateExpression(actions []ActionParam, conditions []Cond
 	conditionExpr := expression.ConditionBuilder{}
 
 	for i, condition := range conditions {
-		switch condition.OperationType {
-		case Equal:
-			if i == 0 {
-				conditionExpr = expression.Name(condition.Name).Equal(expression.Value(condition.Value))
+		for j, conditionName := range condition.Names {
+			switch condition.OperationType {
+			case Equal:
+				if i == 0 && j == 0 {
+					conditionExpr = expression.Name(conditionName).Equal(expression.Value(condition.Value))
+				} else if constrain == ANYCondition {
+					conditionExpr = conditionExpr.Or(expression.Name(conditionName).Equal(expression.Value(condition.Value)))
+				} else {
+					conditionExpr = conditionExpr.And(expression.Name(conditionName).Equal(expression.Value(condition.Value)))
+				}
+			case GreaterThanEqual:
+				if i == 0 && j == 0 {
+					conditionExpr = expression.Name(conditionName).GreaterThanEqual(expression.Value(condition.Value))
+				} else if constrain == ANYCondition {
+					conditionExpr = conditionExpr.Or(expression.Name(conditionName).GreaterThanEqual(expression.Value(condition.Value)))
+				} else {
+					conditionExpr = conditionExpr.And(expression.Name(conditionName).GreaterThanEqual(expression.Value(condition.Value)))
+				}
+			case BeginsWith:
+				if i == 0 && j == 0 {
+					conditionExpr = expression.Name(conditionName).BeginsWith(condition.Value.(string))
+				} else if constrain == ANYCondition {
+					conditionExpr = conditionExpr.Or(expression.Name(conditionName).BeginsWith(condition.Value.(string)))
+				} else {
+					conditionExpr = conditionExpr.And(expression.Name(conditionName).BeginsWith(condition.Value.(string)))
+				}
+			case Contains:
+				if i == 0 && j == 0 {
+					conditionExpr = expression.Name(conditionName).Contains(condition.Value.(string))
+				} else if constrain == ANYCondition {
+					conditionExpr = conditionExpr.Or(expression.Name(conditionName).Contains(condition.Value.(string)))
+				} else {
+					conditionExpr = conditionExpr.And(expression.Name(conditionName).Contains(condition.Value.(string)))
+				}
 			}
-			conditionExpr = conditionExpr.And(expression.Name(condition.Name).Equal(expression.Value(condition.Value)))
-		case GreaterThanEqual:
-			if i == 0 {
-				conditionExpr = expression.Name(condition.Name).GreaterThanEqual(expression.Value(condition.Value))
-			}
-			conditionExpr = conditionExpr.And(expression.Name(condition.Name).GreaterThanEqual(expression.Value(condition.Value)))
-		case BeginsWith:
-			if i == 0 {
-				conditionExpr = expression.Name(condition.Name).BeginsWith(condition.Value.(string))
-			}
-			conditionExpr = conditionExpr.And(expression.Name(condition.Name).BeginsWith(condition.Value.(string)))
-		case Contains:
-			if i == 0 {
-				conditionExpr = expression.Name(condition.Name).Contains(condition.Value.(string))
-			}
-			conditionExpr = conditionExpr.And(expression.Name(condition.Name).Contains(condition.Value.(string)))
 		}
+
 	}
 
 	if len(conditions) > 0 {
