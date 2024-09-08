@@ -1,0 +1,15 @@
+meta {
+  name: GetInteractionByID
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{api-url}}/interactions/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: 1
+}

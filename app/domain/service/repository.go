@@ -17,6 +17,7 @@ import (
 
 type Repository interface {
 	CreateInteraction(context.Context, *model.PromotionInteraction) error
+	GetInteractionByID(context.Context, string) (*model.PromotionInteraction, error)
 
 	CreateUser(context.Context, *model.User) error
 	UpdateUserPicture(context.Context, string, io.Reader) error
@@ -25,7 +26,7 @@ type Repository interface {
 	CreatePromotion(context.Context, *model.Promotion) error
 	UpdatePromotionImage(context.Context, string, io.Reader) error
 	GetPromotionByID(context.Context, string) (*model.Promotion, error)
-	GetAllPromotions(context.Context, model.PromotionQuery) ([]model.Promotion, error)
+	GetPromotions(context.Context, model.PromotionQuery) ([]model.Promotion, error)
 	GetPromotionByCategory(context.Context, string) ([]model.Promotion, error)
 	GetCategories(context.Context) ([]model.Category, error)
 }
@@ -49,6 +50,37 @@ type repository struct {
 	s3  aws.BucketS3
 	cfg *config.Config
 	log config.Logger
+}
+
+func (r *repository) GetInteractionByID(ctx context.Context, id string) (*model.PromotionInteraction, error) {
+	out, err := r.db.GetItem(ctx,
+		&aws.GetItemInput{
+			TableName: r.cfg.Viper.GetString("aws.dynamodb.tables.interaction"),
+			Keys: []aws.Key{
+				{
+					Name:      "id",
+					Value:     id,
+					ValueType: aws.String},
+			},
+		})
+
+	if err != nil {
+		r.log.Error(err.Error())
+		return nil, err
+	}
+
+	if out == nil || out.Item == nil {
+		return nil, nil
+	}
+
+	user := &model.PromotionInteraction{}
+	err = json.Unmarshal(out.Item, user)
+	if err != nil {
+		r.log.Error(err.Error())
+		return nil, err
+	}
+
+	return user, nil
 }
 
 func (r *repository) CreateInteraction(ctx context.Context, interaction *model.PromotionInteraction) error {
@@ -379,7 +411,7 @@ func (r *repository) GetPromotionByID(ctx context.Context, id string) (*model.Pr
 	return promotion, nil
 }
 
-func (r *repository) GetAllPromotions(ctx context.Context, params model.PromotionQuery) ([]model.Promotion, error) {
+func (r *repository) GetPromotions(ctx context.Context, params model.PromotionQuery) ([]model.Promotion, error) {
 	var conditions []aws.ConditionParam
 	for _, category := range params.Categories {
 		conditions = append(conditions, aws.ConditionParam{

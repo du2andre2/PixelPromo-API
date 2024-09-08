@@ -1,0 +1,15 @@
+meta {
+  name: GetPromotions with params
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{api-url}}/promotions?search=rpg
+  body: none
+  auth: none
+}
+
+params:query {
+  search: rpg
+}
