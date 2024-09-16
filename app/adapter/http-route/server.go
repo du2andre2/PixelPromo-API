@@ -1,4 +1,4 @@
-package route
+package http_route
 
 import "github.com/gin-gonic/gin"
 

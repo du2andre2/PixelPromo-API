@@ -1,8 +1,8 @@
-package route
+package http_route
 
 import (
 	"github.com/gin-gonic/gin"
-	"pixelPromo/port/controller"
+	"pixelPromo/adapter/http-route/controller"
 )
 
 type Route interface {

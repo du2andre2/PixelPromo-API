@@ -5,9 +5,9 @@ import (
 	"go.uber.org/fx"
 	"pixelPromo/adapter/aws"
 	"pixelPromo/adapter/config"
+	"pixelPromo/adapter/http-route"
+	"pixelPromo/adapter/http-route/controller"
 	"pixelPromo/domain/service"
-	"pixelPromo/port/controller"
-	"pixelPromo/port/route"
 )
 
 var AdapterModule = fx.Module("adapter",
@@ -28,8 +28,8 @@ var ServiceModule = fx.Module("service",
 
 var PortModule = fx.Module("port",
 	fx.Provide(
-		route.NewServer,
-		route.NewRoute,
+		http_route.NewServer,
+		http_route.NewRoute,
 		controller.NewController,
 	),
 )
@@ -43,7 +43,7 @@ var Module = fx.Options(
 
 func bootstrap(
 	lifecycle fx.Lifecycle,
-	server route.Server,
+	server http_route.Server,
 ) {
 
 	lifecycle.Append(fx.Hook{

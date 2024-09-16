@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"pixelPromo/domain/model"
-	"pixelPromo/domain/service"
+	"pixelPromo/domain/port/handler"
 	"strings"
 )
 
@@ -25,14 +25,20 @@ type Controller interface {
 }
 
 type controller struct {
-	repository service.Repository
+	interactionHandler handler.InteractionHandler
+	promotionHandler   handler.PromotionHandler
+	userHandler        handler.UserHandler
 }
 
 func NewController(
-	repository service.Repository,
+	interactionHandler handler.InteractionHandler,
+	promotionHandler handler.PromotionHandler,
+	userHandler handler.UserHandler,
 ) Controller {
 	return &controller{
-		repository: repository,
+		interactionHandler: interactionHandler,
+		promotionHandler:   promotionHandler,
+		userHandler:        userHandler,
 	}
 }
 
@@ -44,7 +50,7 @@ func (r *controller) GetInteractionByID(ctx *gin.Context) {
 		return
 	}
 
-	promotion, err := r.repository.GetInteractionByID(ctx, id)
+	promotion, err := r.interactionHandler.GetInteractionByID(ctx, id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
@@ -68,7 +74,7 @@ func (r *controller) CreateInteraction(ctx *gin.Context) {
 		return
 	}
 
-	err = r.repository.CreateInteraction(ctx, &interaction)
+	err = r.interactionHandler.CreateInteraction(ctx, &interaction)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
@@ -86,7 +92,7 @@ func (r *controller) CreateUser(ctx *gin.Context) {
 		return
 	}
 
-	err = r.repository.CreateUser(ctx, &user)
+	err = r.userHandler.CreateUser(ctx, &user)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
@@ -119,7 +125,7 @@ func (r *controller) UpdateUserPicture(ctx *gin.Context) {
 
 	fileBytes := bytes.NewReader(buffer)
 
-	err = r.repository.UpdateUserPicture(ctx, id, fileBytes)
+	err = r.userHandler.UpdateUserPicture(ctx, id, fileBytes)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
@@ -136,7 +142,7 @@ func (r *controller) GetUserByID(ctx *gin.Context) {
 		return
 	}
 
-	user, err := r.repository.GetUserByID(ctx, id)
+	user, err := r.userHandler.GetUserByID(ctx, id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
@@ -159,7 +165,7 @@ func (r *controller) CreatePromotion(ctx *gin.Context) {
 		return
 	}
 
-	err = r.repository.CreatePromotion(ctx, &promotion)
+	err = r.promotionHandler.CreatePromotion(ctx, &promotion)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
@@ -192,7 +198,7 @@ func (r *controller) UpdatePromotionImage(ctx *gin.Context) {
 
 	fileBytes := bytes.NewReader(buffer)
 
-	err = r.repository.UpdatePromotionImage(ctx, id, fileBytes)
+	err = r.promotionHandler.UpdatePromotionImage(ctx, id, fileBytes)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
@@ -209,7 +215,7 @@ func (r *controller) GetPromotionByID(ctx *gin.Context) {
 		return
 	}
 
-	promotion, err := r.repository.GetPromotionByID(ctx, id)
+	promotion, err := r.promotionHandler.GetPromotionByID(ctx, id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
@@ -233,7 +239,7 @@ func (r *controller) GetPromotions(ctx *gin.Context) {
 		Search:     search,
 		Categories: categories,
 	}
-	promotions, err := r.repository.GetPromotions(ctx, params)
+	promotions, err := r.promotionHandler.GetPromotions(ctx, params)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
@@ -256,7 +262,7 @@ func (r *controller) GetPromotionByCategory(ctx *gin.Context) {
 		return
 	}
 
-	promotions, err := r.repository.GetPromotionByCategory(ctx, category)
+	promotions, err := r.promotionHandler.GetPromotionByCategory(ctx, category)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
@@ -273,7 +279,7 @@ func (r *controller) GetPromotionByCategory(ctx *gin.Context) {
 
 func (r *controller) GetCategories(ctx *gin.Context) {
 
-	categories, err := r.repository.GetCategories(ctx)
+	categories, err := r.promotionHandler.GetCategories(ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
