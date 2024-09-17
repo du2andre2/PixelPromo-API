@@ -4,51 +4,53 @@ import (
 	"context"
 	"go.uber.org/fx"
 	"pixelPromo/adapter/aws"
-	"pixelPromo/adapter/config"
-	"pixelPromo/adapter/http-route"
-	"pixelPromo/adapter/http-route/controller"
+	"pixelPromo/adapter/http"
+	"pixelPromo/adapter/repository"
+	"pixelPromo/adapter/storage"
+	"pixelPromo/config"
 	"pixelPromo/domain/service"
 )
 
 var AdapterModule = fx.Module("adapter",
 	fx.Provide(
-		aws.NewDynamoDb,
-		aws.NewBucketS3,
 		aws.NewConfigAWS,
-		config.NewConfig,
-		config.NewLogger,
+		storage.NewBucketS3Storage,
+		repository.NewDynamoDBRepository,
+		http.NewRouter,
+		http.NewController,
 	),
 )
 
 var ServiceModule = fx.Module("service",
 	fx.Provide(
-		service.NewRepository,
+		service.NewInteractionService,
+		service.NewPromotionService,
+		service.NewUserService,
 	),
 )
 
-var PortModule = fx.Module("port",
+var ConfigModule = fx.Module("config",
 	fx.Provide(
-		http_route.NewServer,
-		http_route.NewRoute,
-		controller.NewController,
+		config.NewConfig,
+		config.NewLogger,
 	),
 )
 
 var Module = fx.Options(
 	AdapterModule,
 	ServiceModule,
-	PortModule,
+	ConfigModule,
 	fx.Invoke(bootstrap),
 )
 
 func bootstrap(
 	lifecycle fx.Lifecycle,
-	server http_route.Server,
+	router http.Router,
 ) {
 
 	lifecycle.Append(fx.Hook{
 		OnStart: func(context.Context) error {
-			go server.Run()
+			go router.Run()
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {

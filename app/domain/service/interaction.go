@@ -2,51 +2,45 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
-	"pixelPromo/adapter/aws"
-	"pixelPromo/adapter/config"
+	"pixelPromo/config"
 	"pixelPromo/domain/model"
-	"pixelPromo/domain/port/handler"
-	"pixelPromo/domain/port/repository"
+	"pixelPromo/domain/port"
 	"strings"
 	"time"
 )
 
 func NewInteractionService(
-	interactionRp repository.InteractionRepository,
-	userRp repository.UserRepository,
+	rp port.Repository,
 	cfg *config.Config,
 	log config.Logger,
-) handler.InteractionHandler {
+) port.InteractionHandler {
 	return &interactionService{
-		interactionRp: interactionRp,
-		userRp:        userRp,
-		cfg:                   cfg,
-		log:                   log,
+		rp:  rp,
+		cfg: cfg,
+		log: log,
 	}
 }
 
 type interactionService struct {
-	interactionRp repository.InteractionRepository,
-	userRp repository.UserRepository,
+	rp  port.Repository
 	cfg *config.Config
 	log config.Logger
 }
 
-func (r *interactionService) GetInteractionByID(ctx context.Context, id string) (model.PromotionInteraction, error) {
-	interaction, err := r.interactionRp.GetInteractionByID(ctx, id)
+func (r *interactionService) GetInteractionByID(ctx context.Context, id string) (*model.PromotionInteraction, error) {
+	interaction, err := r.rp.GetInteractionByID(ctx, id)
 	if err != nil {
 		r.log.Error(err.Error())
-		return model.PromotionInteraction{}, err
+		return nil, err
 	}
 
 	return interaction, nil
 }
 
-func (r *interactionService) CreateInteraction(ctx context.Context, interaction model.PromotionInteraction) error {
+func (r *interactionService) CreateOrUpdateInteraction(ctx context.Context, interaction *model.PromotionInteraction) error {
 
 	err := r.validInteraction(interaction)
 	if err != nil {
@@ -54,44 +48,13 @@ func (r *interactionService) CreateInteraction(ctx context.Context, interaction 
 		return err
 	}
 
-	err = r.interactionRp.CreateInteraction(ctx, interaction)
+	ownerUser, err := r.rp.GetUserByID(ctx, interaction.OwnerUserID)
 	if err != nil {
 		r.log.Error(err.Error())
 		return err
 	}
-
-	ownerItem, err := r.userRp.Get(ctx,
-		&aws.GetItemInput{
-			TableName: r.cfg.Viper.GetString("aws.dynamodb.tables.user"),
-			Keys: []aws.Key{
-				{
-					Name:      "id",
-					Value:     interaction.OwnerUserID,
-					ValueType: aws.String},
-			},
-		})
-
-	if ownerItem == nil || ownerItem.Item == nil {
-		err = errors.New("ownerUser not found")
-		r.log.Error(err.Error())
-		return err
-	}
-
-	promotionItem, err := r.db.GetItem(ctx,
-		&aws.GetItemInput{
-			TableName: r.cfg.Viper.GetString("aws.dynamodb.tables.promotion"),
-			Keys: []aws.Key{
-				{
-					Name:      "id",
-					Value:     interaction.PromotionID,
-					ValueType: aws.String},
-			},
-		})
-
-	if promotionItem == nil || promotionItem.Item == nil {
-		err = errors.New("promotion not found")
-		r.log.Error(err.Error())
-		return err
+	if ownerUser == nil {
+		return errors.New("owner user not found")
 	}
 
 	interaction.InteractionDate = time.Now()
@@ -103,32 +66,24 @@ func (r *interactionService) CreateInteraction(ctx context.Context, interaction 
 		return err
 	}
 
-	owner := &model.User{}
-	err = json.Unmarshal(ownerItem.Item, owner)
+	ownerUser, err = r.EditUserStatisticByScore(ctx, ownerUser, score)
 	if err != nil {
 		r.log.Error(err.Error())
 		return err
 	}
 
-	owner, err = r.EditUserStatisticByScore(ctx, owner, score)
+	err = r.rp.CreateOrUpdateInteraction(ctx, interaction)
 	if err != nil {
 		r.log.Error(err.Error())
 		return err
 	}
-
-	if err = r.db.BatchPutItem(ctx,
-		[]aws.PutItemInput{
-			{
-				TableName: r.cfg.Viper.GetString("aws.dynamodb.tables.promotion-interaction"),
-				BodyItem:  interaction,
-			}, {
-				TableName: r.cfg.Viper.GetString("aws.dynamodb.tables.user-score"),
-				BodyItem:  score,
-			}, {
-				TableName: r.cfg.Viper.GetString("aws.dynamodb.tables.user"),
-				BodyItem:  owner,
-			},
-		}); err != nil {
+	err = r.rp.CreateOrUpdateUser(ctx, ownerUser)
+	if err != nil {
+		r.log.Error(err.Error())
+		return err
+	}
+	err = r.rp.CreateOrUpdateUserScore(ctx, score)
+	if err != nil {
 		r.log.Error(err.Error())
 		return err
 	}
@@ -137,7 +92,10 @@ func (r *interactionService) CreateInteraction(ctx context.Context, interaction 
 	return nil
 }
 
-func (r *interactionService) validInteraction(interaction model.PromotionInteraction) error {
+func (r *interactionService) validInteraction(interaction *model.PromotionInteraction) error {
+	if interaction == nil {
+		return errors.New("interaction is nil")
+	}
 
 	if len(strings.TrimSpace(interaction.UserID)) == 0 {
 		return errors.New("userId is empty")
@@ -173,7 +131,6 @@ func (r *interactionService) validInteraction(interaction model.PromotionInterac
 }
 
 func (r *interactionService) CreateUserScoreByInteraction(interaction *model.PromotionInteraction) (*model.UserScore, error) {
-
 	var score model.UserScore
 
 	score.ScoreDate = time.Now()
@@ -213,25 +170,8 @@ func (r *interactionService) EditUserStatisticByScore(ctx context.Context, user 
 
 func (r *interactionService) calculateElo(ctx context.Context, user *model.User, newPoints int) (string, error) {
 
-	rangeInDays := -7
-	dateRange := time.Now().AddDate(0, 0, rangeInDays)
-	out, err := r.db.ScanItem(ctx,
-		&aws.ScanItemInput{
-			TableName: r.cfg.Viper.GetString("aws.dynamodb.tables.user-score"),
-			Conditions: []aws.ConditionParam{
-				{
-					Names:         []string{"userId"},
-					Value:         user.ID,
-					OperationType: aws.Equal,
-				},
-				{
-					Names:         []string{"scoreDate"},
-					Value:         dateRange,
-					OperationType: aws.GreaterThanEqual,
-				},
-			},
-		})
-
+	rangeInDays := 7
+	scoreList, err := r.rp.GetAllUserScoreByRange(ctx, user.ID, rangeInDays)
 	if err != nil {
 		r.log.Error(err.Error())
 		return "", err
@@ -240,16 +180,8 @@ func (r *interactionService) calculateElo(ctx context.Context, user *model.User,
 	var pointsInRange int
 	pointsInRange += newPoints
 
-	if !(out == nil || out.Items == nil || len(out.Items) == 0) {
-		for _, out := range out.Items {
-			userScore := model.UserScore{}
-			err = json.Unmarshal(out.Item, &userScore)
-			if err != nil {
-				r.log.Error(err.Error())
-				return "", err
-			}
-			pointsInRange += userScore.Points
-		}
+	for _, score := range scoreList {
+		pointsInRange += score.Points
 	}
 
 	if pointsInRange >= 100 { //todo:refactor this

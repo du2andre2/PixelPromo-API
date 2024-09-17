@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"log"
-	cfg "pixelPromo/adapter/config"
+	cfg "pixelPromo/config"
 )
 
 func NewConfigAWS(c *cfg.Config) *aws.Config {
