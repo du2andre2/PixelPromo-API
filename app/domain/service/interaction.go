@@ -40,6 +40,35 @@ func (r *interactionService) GetInteractionByID(ctx context.Context, id string) 
 	return interaction, nil
 }
 
+func (r *interactionService) GetCommentsByPromotionID(ctx context.Context, id string) ([]model.PromotionInteraction, error) {
+	interaction, err := r.rp.GetCommentsByPromotionID(ctx, id)
+	if err != nil {
+		r.log.Error(err.Error())
+		return nil, err
+	}
+
+	return interaction, nil
+}
+
+func (r *interactionService) GetInteractionsCountersByPromotionID(ctx context.Context, id string) (map[string]int, error) {
+	interactions, err := r.rp.GetInteractionsByPromotionID(ctx, id)
+	if err != nil {
+		r.log.Error(err.Error())
+		return nil, err
+	}
+
+	counters := map[string]int{
+		"favorite": 0,
+		"like":     0,
+		"comment":  0,
+	}
+	for _, interaction := range interactions {
+		counters[string(interaction.InteractionType)] += 1
+	}
+
+	return counters, nil
+}
+
 func (r *interactionService) CreateOrUpdateInteraction(ctx context.Context, interaction *model.PromotionInteraction) error {
 
 	err := r.validInteraction(interaction)
@@ -66,7 +95,7 @@ func (r *interactionService) CreateOrUpdateInteraction(ctx context.Context, inte
 		return err
 	}
 
-	ownerUser, err = r.EditUserStatisticByScore(ctx, ownerUser, score)
+	ownerUser, err = r.editUserStatisticByScore(ctx, ownerUser, score)
 	if err != nil {
 		r.log.Error(err.Error())
 		return err
@@ -113,15 +142,15 @@ func (r *interactionService) validInteraction(interaction *model.PromotionIntera
 		return errors.New("promotionId is empty")
 	}
 
-	if len(strings.TrimSpace(string(interaction.Type))) == 0 {
-		return errors.New("type is empty")
+	if len(strings.TrimSpace(string(interaction.InteractionType))) == 0 {
+		return errors.New("interactionType is empty")
 	}
 
 	if !interaction.IsValidType() {
 		return errors.New("type is invalid")
 	}
 
-	if interaction.Type == model.Comment {
+	if interaction.InteractionType == model.Comment {
 		if len(strings.TrimSpace(interaction.Comment)) == 0 {
 			return errors.New("comment is empty")
 		}
@@ -137,7 +166,7 @@ func (r *interactionService) CreateUserScoreByInteraction(interaction *model.Pro
 	score.ID = fmt.Sprintf("%d", score.ScoreDate.UnixNano())
 	score.UserID = interaction.OwnerUserID
 
-	points, err := r.getPointsByInteractionType(interaction.Type)
+	points, err := r.getPointsByInteractionType(interaction.InteractionType)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +183,7 @@ func (r *interactionService) getPointsByInteractionType(interactionType model.In
 	return points, nil
 }
 
-func (r *interactionService) EditUserStatisticByScore(ctx context.Context, user *model.User, score *model.UserScore) (*model.User, error) {
+func (r *interactionService) editUserStatisticByScore(ctx context.Context, user *model.User, score *model.UserScore) (*model.User, error) {
 
 	newLevel := calculateLevel(user, score.Points)
 	newElo, err := r.calculateElo(ctx, user, score.Points)

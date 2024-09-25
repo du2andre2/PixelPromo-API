@@ -8,6 +8,8 @@ import (
 type Repository interface {
 	CreateOrUpdateInteraction(context.Context, *model.PromotionInteraction) error
 	GetInteractionByID(context.Context, string) (*model.PromotionInteraction, error)
+	GetInteractionsByPromotionID(context.Context, string) ([]model.PromotionInteraction, error)
+	GetCommentsByPromotionID(context.Context, string) ([]model.PromotionInteraction, error)
 	CreateOrUpdateUser(context.Context, *model.User) error
 	CreateOrUpdateUserScore(context.Context, *model.UserScore) error
 	GetAllUserScoreByRange(context.Context, string, int) ([]model.UserScore, error)

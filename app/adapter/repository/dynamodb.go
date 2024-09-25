@@ -66,6 +66,55 @@ func (r repository) GetInteractionByID(ctx context.Context, id string) (*model.P
 	return &interaction, nil
 }
 
+func (r repository) GetInteractionsByPromotionID(ctx context.Context, id string) ([]model.PromotionInteraction, error) {
+	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.promotion-interaction")
+	result, err := r.client.Scan(ctx, &dynamodb.ScanInput{
+		TableName:        aws.String(tableName),
+		FilterExpression: aws.String("promotionId = :promotionId"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":promotionId": &types.AttributeValueMemberS{Value: id},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if result == nil || result.Items == nil {
+		return nil, nil
+	}
+	var interactions []model.PromotionInteraction
+	err = attributevalue.UnmarshalListOfMaps(result.Items, &interactions)
+	if err != nil {
+		return nil, err
+	}
+
+	return interactions, nil
+}
+
+func (r repository) GetCommentsByPromotionID(ctx context.Context, id string) ([]model.PromotionInteraction, error) {
+	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.promotion-interaction")
+	result, err := r.client.Scan(ctx, &dynamodb.ScanInput{
+		TableName:        aws.String(tableName),
+		FilterExpression: aws.String("promotionId = :promotionId AND interactionType = :interactionType"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":promotionId":     &types.AttributeValueMemberS{Value: id},
+			":interactionType": &types.AttributeValueMemberS{Value: "comment"},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if result == nil || result.Items == nil {
+		return nil, nil
+	}
+	var interactions []model.PromotionInteraction
+	err = attributevalue.UnmarshalListOfMaps(result.Items, &interactions)
+	if err != nil {
+		return nil, err
+	}
+
+	return interactions, nil
+}
+
 func (r repository) CreateOrUpdateUser(ctx context.Context, user *model.User) error {
 	item, err := attributevalue.MarshalMap(user)
 	if err != nil {
@@ -98,9 +147,9 @@ func (r repository) CreateOrUpdateUserScore(ctx context.Context, score *model.Us
 func (r repository) GetAllUserScoreByRange(ctx context.Context, userID string, limit int) ([]model.UserScore, error) {
 	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.user-score")
 
-	result, err := r.client.Query(ctx, &dynamodb.QueryInput{
-		TableName:              aws.String(tableName),
-		KeyConditionExpression: aws.String("userId = :userId"),
+	result, err := r.client.Scan(ctx, &dynamodb.ScanInput{
+		TableName:        aws.String(tableName),
+		FilterExpression: aws.String("userId = :userId"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":userId": &types.AttributeValueMemberS{Value: userID},
 		},

@@ -16,6 +16,11 @@ aws dynamodb create-table \
         ReadCapacityUnits=5,WriteCapacityUnits=5 \
     --endpoint-url http://localhost:4566 > /dev/null
 
+aws s3api create-bucket \
+    --bucket pp-user-pictures \
+    --endpoint-url http://localhost:4566 > /dev/null
+
+
 aws dynamodb create-table \
     --table-name pp-promotion-catalog \
     --attribute-definitions \

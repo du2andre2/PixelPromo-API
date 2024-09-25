@@ -14,6 +14,8 @@ type Controller interface {
 	CreateUser(*gin.Context)
 	CreateInteraction(*gin.Context)
 	GetInteractionByID(*gin.Context)
+	GetCommentsByPromotionID(*gin.Context)
+	GetInteractionsCountersByPromotionID(*gin.Context)
 	UpdateUserPicture(ctx *gin.Context)
 	GetUserByID(ctx *gin.Context)
 	CreatePromotion(*gin.Context)
@@ -50,7 +52,53 @@ func (r *controller) GetInteractionByID(ctx *gin.Context) {
 		return
 	}
 
-	promotion, err := r.interactionHandler.GetInteractionByID(ctx, id)
+	interaction, err := r.interactionHandler.GetInteractionByID(ctx, id)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
+		return
+	}
+
+	if interaction == nil {
+		ctx.Writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	ctx.IndentedJSON(http.StatusOK, interaction)
+	return
+}
+
+func (r *controller) GetInteractionsCountersByPromotionID(ctx *gin.Context) {
+	id := ctx.Param("id")
+
+	if len(strings.TrimSpace(id)) == 0 {
+		ctx.Writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	counters, err := r.interactionHandler.GetInteractionsCountersByPromotionID(ctx, id)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
+		return
+	}
+
+	if len(counters) == 0 {
+		ctx.Writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	ctx.IndentedJSON(http.StatusOK, counters)
+	return
+}
+
+func (r *controller) GetCommentsByPromotionID(ctx *gin.Context) {
+	id := ctx.Param("id")
+
+	if len(strings.TrimSpace(id)) == 0 {
+		ctx.Writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	promotion, err := r.interactionHandler.GetCommentsByPromotionID(ctx, id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return

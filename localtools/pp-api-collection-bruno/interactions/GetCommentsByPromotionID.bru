@@ -1,0 +1,15 @@
+meta {
+  name: GetCommentsByPromotionID
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{api-url}}/interactions/comments/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: 1
+}

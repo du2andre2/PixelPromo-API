@@ -52,6 +52,9 @@ func (r *router) setup(gin *gin.Engine) {
 	{
 		interactionGroup.POST("/", r.controller.CreateInteraction)
 		interactionGroup.GET("/:id", r.controller.GetInteractionByID)
+		interactionGroup.GET("/comments/:id", r.controller.GetCommentsByPromotionID)
+		interactionGroup.GET("/counters/:id", r.controller.GetInteractionsCountersByPromotionID)
+
 	}
 
 	return

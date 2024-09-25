@@ -9,6 +9,8 @@ import (
 type InteractionHandler interface {
 	CreateOrUpdateInteraction(context.Context, *model.PromotionInteraction) error
 	GetInteractionByID(context.Context, string) (*model.PromotionInteraction, error)
+	GetCommentsByPromotionID(context.Context, string) ([]model.PromotionInteraction, error)
+	GetInteractionsCountersByPromotionID(context.Context, string) (map[string]int, error)
 }
 
 type UserHandler interface {
