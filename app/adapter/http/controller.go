@@ -10,23 +10,7 @@ import (
 	"strings"
 )
 
-type Controller interface {
-	CreateUser(*gin.Context)
-	CreateInteraction(*gin.Context)
-	GetInteractionByID(*gin.Context)
-	GetCommentsByPromotionID(*gin.Context)
-	GetInteractionsCountersByPromotionID(*gin.Context)
-	UpdateUserPicture(ctx *gin.Context)
-	GetUserByID(ctx *gin.Context)
-	CreatePromotion(*gin.Context)
-	UpdatePromotionImage(ctx *gin.Context)
-	GetPromotionByID(ctx *gin.Context)
-	GetPromotions(ctx *gin.Context)
-	GetPromotionByCategory(ctx *gin.Context)
-	GetCategories(ctx *gin.Context)
-}
-
-type controller struct {
+type Controller struct {
 	interactionHandler port.InteractionHandler
 	promotionHandler   port.PromotionHandler
 	userHandler        port.UserHandler
@@ -36,15 +20,15 @@ func NewController(
 	interactionHandler port.InteractionHandler,
 	promotionHandler port.PromotionHandler,
 	userHandler port.UserHandler,
-) Controller {
-	return &controller{
+) *Controller {
+	return &Controller{
 		interactionHandler: interactionHandler,
 		promotionHandler:   promotionHandler,
 		userHandler:        userHandler,
 	}
 }
 
-func (r *controller) GetInteractionByID(ctx *gin.Context) {
+func (r *Controller) GetInteractionByID(ctx *gin.Context) {
 	id := ctx.Param("id")
 
 	if len(strings.TrimSpace(id)) == 0 {
@@ -67,7 +51,7 @@ func (r *controller) GetInteractionByID(ctx *gin.Context) {
 	return
 }
 
-func (r *controller) GetInteractionsCountersByPromotionID(ctx *gin.Context) {
+func (r *Controller) GetInteractionsCountersByPromotionID(ctx *gin.Context) {
 	id := ctx.Param("id")
 
 	if len(strings.TrimSpace(id)) == 0 {
@@ -90,7 +74,7 @@ func (r *controller) GetInteractionsCountersByPromotionID(ctx *gin.Context) {
 	return
 }
 
-func (r *controller) GetCommentsByPromotionID(ctx *gin.Context) {
+func (r *Controller) GetCommentsByPromotionID(ctx *gin.Context) {
 	id := ctx.Param("id")
 
 	if len(strings.TrimSpace(id)) == 0 {
@@ -113,7 +97,7 @@ func (r *controller) GetCommentsByPromotionID(ctx *gin.Context) {
 	return
 }
 
-func (r *controller) CreateInteraction(ctx *gin.Context) {
+func (r *Controller) CreateInteraction(ctx *gin.Context) {
 
 	var interaction model.PromotionInteraction
 	err := ctx.ShouldBindJSON(&interaction)
@@ -131,7 +115,7 @@ func (r *controller) CreateInteraction(ctx *gin.Context) {
 	ctx.IndentedJSON(http.StatusOK, interaction)
 }
 
-func (r *controller) CreateUser(ctx *gin.Context) {
+func (r *Controller) CreateUser(ctx *gin.Context) {
 
 	var user model.User
 	err := ctx.ShouldBindJSON(&user)
@@ -149,7 +133,7 @@ func (r *controller) CreateUser(ctx *gin.Context) {
 	ctx.IndentedJSON(http.StatusOK, user)
 }
 
-func (r *controller) UpdateUserPicture(ctx *gin.Context) {
+func (r *Controller) UpdateUserPicture(ctx *gin.Context) {
 	id := ctx.Param("id")
 
 	if len(strings.TrimSpace(id)) == 0 {
@@ -182,7 +166,7 @@ func (r *controller) UpdateUserPicture(ctx *gin.Context) {
 	ctx.Status(http.StatusOK)
 }
 
-func (r *controller) GetUserByID(ctx *gin.Context) {
+func (r *Controller) GetUserByID(ctx *gin.Context) {
 	id := ctx.Param("id")
 
 	if len(strings.TrimSpace(id)) == 0 {
@@ -204,7 +188,29 @@ func (r *controller) GetUserByID(ctx *gin.Context) {
 	ctx.IndentedJSON(http.StatusOK, user)
 }
 
-func (r *controller) CreatePromotion(ctx *gin.Context) {
+func (r *Controller) Login(ctx *gin.Context) {
+	var login model.Login
+	err := ctx.ShouldBindJSON(&login)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
+		return
+	}
+
+	user, err := r.userHandler.Login(ctx, &login)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
+		return
+	}
+
+	if user == nil {
+		ctx.Writer.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	ctx.IndentedJSON(http.StatusOK, user)
+}
+
+func (r *Controller) CreatePromotion(ctx *gin.Context) {
 
 	var promotion model.Promotion
 	err := ctx.ShouldBindJSON(&promotion)
@@ -222,7 +228,7 @@ func (r *controller) CreatePromotion(ctx *gin.Context) {
 	ctx.IndentedJSON(http.StatusOK, promotion)
 }
 
-func (r *controller) UpdatePromotionImage(ctx *gin.Context) {
+func (r *Controller) UpdatePromotionImage(ctx *gin.Context) {
 	id := ctx.Param("id")
 
 	if len(strings.TrimSpace(id)) == 0 {
@@ -255,7 +261,7 @@ func (r *controller) UpdatePromotionImage(ctx *gin.Context) {
 	ctx.Status(http.StatusOK)
 }
 
-func (r *controller) GetPromotionByID(ctx *gin.Context) {
+func (r *Controller) GetPromotionByID(ctx *gin.Context) {
 	id := ctx.Param("id")
 
 	if len(strings.TrimSpace(id)) == 0 {
@@ -278,7 +284,7 @@ func (r *controller) GetPromotionByID(ctx *gin.Context) {
 	return
 }
 
-func (r *controller) GetPromotions(ctx *gin.Context) {
+func (r *Controller) GetPromotions(ctx *gin.Context) {
 
 	categories, _ := ctx.GetQueryArray("category")
 	search, _ := ctx.GetQuery("search")
@@ -302,7 +308,7 @@ func (r *controller) GetPromotions(ctx *gin.Context) {
 	return
 }
 
-func (r *controller) GetPromotionByCategory(ctx *gin.Context) {
+func (r *Controller) GetPromotionByCategory(ctx *gin.Context) {
 	category := ctx.Param("category")
 
 	if len(strings.TrimSpace(category)) == 0 {
@@ -325,7 +331,7 @@ func (r *controller) GetPromotionByCategory(ctx *gin.Context) {
 	return
 }
 
-func (r *controller) GetCategories(ctx *gin.Context) {
+func (r *Controller) GetCategories(ctx *gin.Context) {
 
 	categories, err := r.promotionHandler.GetCategories(ctx)
 	if err != nil {

@@ -9,11 +9,11 @@ type Router interface {
 }
 
 type router struct {
-	controller Controller
+	controller *Controller
 }
 
 func NewRouter(
-	controller Controller,
+	controller *Controller,
 ) Router {
 	return &router{
 		controller: controller,
@@ -31,6 +31,7 @@ func (r *router) setup(gin *gin.Engine) {
 	userGroup := gin.Group("/users")
 	{
 		userGroup.POST("/", r.controller.CreateUser)
+		userGroup.GET("/login", r.controller.Login)
 		userGroup.POST("/picture/:id", r.controller.UpdateUserPicture)
 		userGroup.GET("/:id", r.controller.GetUserByID)
 	}

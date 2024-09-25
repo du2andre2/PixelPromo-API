@@ -85,6 +85,21 @@ func (r *userService) UpdateUserPicture(ctx context.Context, id string, image io
 	return nil
 }
 
+func (r *userService) Login(ctx context.Context, login *model.Login) (*model.User, error) {
+	err := r.validLogin(login)
+	if err != nil {
+		r.log.Error(err.Error())
+		return nil, err
+	}
+	user, err := r.rp.GetUserByEmailAndPassword(ctx, login.Email, login.Password)
+	if err != nil {
+		r.log.Error(err.Error())
+		return nil, err
+	}
+
+	return user, nil
+}
+
 func (r *userService) GetUserByID(ctx context.Context, id string) (*model.User, error) {
 	user, err := r.rp.GetUserByID(ctx, id)
 	if err != nil {
@@ -109,6 +124,22 @@ func (r *userService) validUser(user *model.User) error {
 		return errors.New("password is empty")
 	}
 	if !isEmailValid(user.Email) {
+		return errors.New("user email is invalid")
+	}
+	return nil
+}
+
+func (r *userService) validLogin(login *model.Login) error {
+	if login == nil {
+		return errors.New("login is nil")
+	}
+	if len(strings.TrimSpace(login.Email)) == 0 {
+		return errors.New("email is empty")
+	}
+	if len(strings.TrimSpace(login.Password)) == 0 {
+		return errors.New("password is empty")
+	}
+	if !isEmailValid(login.Email) {
 		return errors.New("user email is invalid")
 	}
 	return nil

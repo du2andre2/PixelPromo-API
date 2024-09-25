@@ -17,6 +17,7 @@ type UserHandler interface {
 	CreateUser(context.Context, *model.User) error
 	UpdateUserPicture(context.Context, string, io.Reader) error
 	GetUserByID(context.Context, string) (*model.User, error)
+	Login(context.Context, *model.Login) (*model.User, error)
 }
 type PromotionHandler interface {
 	CreatePromotion(context.Context, *model.Promotion) error

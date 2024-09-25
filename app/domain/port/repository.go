@@ -14,6 +14,7 @@ type Repository interface {
 	CreateOrUpdateUserScore(context.Context, *model.UserScore) error
 	GetAllUserScoreByRange(context.Context, string, int) ([]model.UserScore, error)
 	GetUserByID(context.Context, string) (*model.User, error)
+	GetUserByEmailAndPassword(context.Context, string, string) (*model.User, error)
 	CreateOrUpdatePromotion(context.Context, *model.Promotion) error
 	GetPromotionByID(context.Context, string) (*model.Promotion, error)
 	GetPromotionsWithParams(context.Context, *model.PromotionQuery) ([]model.Promotion, error)
