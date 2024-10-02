@@ -194,6 +194,28 @@ func (r repository) GetUserByID(ctx context.Context, id string) (*model.User, er
 
 	return &user, nil
 }
+
+func (r repository) GetAllUsers(ctx context.Context) ([]model.User, error) {
+	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.user")
+	result, err := r.client.Scan(ctx, &dynamodb.ScanInput{
+		TableName: aws.String(tableName),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	if result == nil || result.Items == nil || len(result.Items) == 0 {
+		return nil, nil
+	}
+
+	var users []model.User
+	err = attributevalue.UnmarshalListOfMaps(result.Items, &users)
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
 func (r repository) GetUserByEmailAndPassword(ctx context.Context, email string, password string) (*model.User, error) {
 	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.user")
 	result, err := r.client.Scan(ctx, &dynamodb.ScanInput{

@@ -188,6 +188,22 @@ func (r *Controller) GetUserByID(ctx *gin.Context) {
 	ctx.IndentedJSON(http.StatusOK, user)
 }
 
+func (r *Controller) GetUserRank(ctx *gin.Context) {
+
+	users, err := r.userHandler.GetUserRank(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
+		return
+	}
+
+	if users == nil {
+		ctx.Writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	ctx.IndentedJSON(http.StatusOK, users)
+}
+
 func (r *Controller) Login(ctx *gin.Context) {
 	var login model.Login
 	err := ctx.ShouldBindJSON(&login)

@@ -34,6 +34,7 @@ func (r *router) setup(gin *gin.Engine) {
 		userGroup.GET("/login", r.controller.Login)
 		userGroup.POST("/picture/:id", r.controller.UpdateUserPicture)
 		userGroup.GET("/:id", r.controller.GetUserByID)
+		userGroup.GET("/rank", r.controller.GetUserRank)
 	}
 
 	promotionGroup := gin.Group("/promotions")

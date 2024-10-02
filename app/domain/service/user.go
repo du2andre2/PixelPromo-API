@@ -110,6 +110,18 @@ func (r *userService) GetUserByID(ctx context.Context, id string) (*model.User, 
 	return user, nil
 }
 
+func (r *userService) GetUserRank(ctx context.Context) ([]model.User, error) {
+	users, err := r.rp.GetAllUsers(ctx)
+	if err != nil {
+		r.log.Error(err.Error())
+		return nil, err
+	}
+
+	usersRank := make([]model.User, len(users))
+	_ = usersRank
+	return users, nil
+}
+
 func (r *userService) validUser(user *model.User) error {
 	if user == nil {
 		return errors.New("user is nil")
