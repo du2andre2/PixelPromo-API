@@ -10,8 +10,10 @@ aws dynamodb create-table \
     --table-name pp-user-catalog \
     --attribute-definitions \
         AttributeName=id,AttributeType=S \
+        AttributeName=CreatedAt,AttributeType=S \
     --key-schema \
         AttributeName=id,KeyType=HASH \
+        AttributeName=DT,KeyType=RANGE \
     --provisioned-throughput \
         ReadCapacityUnits=5,WriteCapacityUnits=5 \
     --endpoint-url http://localhost:4566 > /dev/null
@@ -25,8 +27,10 @@ aws dynamodb create-table \
     --table-name pp-promotion-catalog \
     --attribute-definitions \
         AttributeName=id,AttributeType=S \
+        AttributeName=CreatedAt,AttributeType=S \
     --key-schema \
         AttributeName=id,KeyType=HASH \
+        AttributeName=DT,KeyType=RANGE \
     --provisioned-throughput \
         ReadCapacityUnits=5,WriteCapacityUnits=5 \
     --endpoint-url http://localhost:4566 > /dev/null
@@ -35,8 +39,10 @@ aws dynamodb create-table \
     --table-name pp-promotion-interaction \
     --attribute-definitions \
         AttributeName=id,AttributeType=S \
+        AttributeName=CreatedAt,AttributeType=S \
     --key-schema \
         AttributeName=id,KeyType=HASH \
+        AttributeName=DT,KeyType=RANGE \
     --provisioned-throughput \
         ReadCapacityUnits=5,WriteCapacityUnits=5 \
     --endpoint-url http://localhost:4566 > /dev/null
@@ -55,8 +61,10 @@ aws dynamodb create-table \
     --table-name pp-user-score \
     --attribute-definitions \
         AttributeName=id,AttributeType=S \
+        AttributeName=CreatedAt,AttributeType=S \
     --key-schema \
         AttributeName=id,KeyType=HASH \
+        AttributeName=DT,KeyType=RANGE \
     --provisioned-throughput \
         ReadCapacityUnits=5,WriteCapacityUnits=5 \
     --endpoint-url http://localhost:4566 > /dev/null

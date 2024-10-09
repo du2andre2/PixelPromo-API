@@ -28,7 +28,7 @@ type PromotionInteraction struct {
 	UserID          string          `json:"userId" dynamodbav:"userId"`
 	Comment         string          `json:"comment" dynamodbav:"comment"`
 	InteractionType InteractionType `json:"interactionType" dynamodbav:"interactionType"`
-	InteractionDate time.Time       `json:"interactionDate" dynamodbav:"interactionDate"`
+	CreatedAt       time.Time       `json:"createdAt" dynamodbav:"createdAt"`
 }
 
 func (p *PromotionInteraction) IsValidType() bool {

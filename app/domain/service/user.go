@@ -9,6 +9,7 @@ import (
 	"pixelPromo/domain/model"
 	"pixelPromo/domain/port"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 )
@@ -110,15 +111,42 @@ func (r *userService) GetUserByID(ctx context.Context, id string) (*model.User, 
 	return user, nil
 }
 
-func (r *userService) GetUserRank(ctx context.Context) ([]model.User, error) {
-	users, err := r.rp.GetAllUsers(ctx)
+func (r *userService) GetUserRank(ctx context.Context, limit int) ([]model.User, error) {
+
+	initDate := time.Now().Add((24 * 7 * time.Hour) * -1)
+	scoreList, err := r.rp.GetAllUserScoreByTime(ctx, initDate)
 	if err != nil {
 		r.log.Error(err.Error())
 		return nil, err
 	}
 
-	usersRank := make([]model.User, len(users))
-	_ = usersRank
+	usersRank := make(map[string]int)
+	for _, score := range scoreList {
+		usersRank[score.UserID] += score.Points
+	}
+
+	keys := make([]string, 0, len(usersRank))
+
+	for key := range usersRank {
+		keys = append(keys, key)
+	}
+	sort.SliceStable(keys, func(i, j int) bool {
+		return usersRank[keys[i]] > usersRank[keys[j]]
+	})
+
+	users := make([]model.User, 0, limit)
+	for i, k := range keys {
+		if i > limit {
+			break
+		}
+		user, err := r.rp.GetUserByID(ctx, k)
+		if err != nil {
+			r.log.Error(err.Error())
+			return nil, err
+		}
+		users = append(users, *user)
+	}
+
 	return users, nil
 }
 

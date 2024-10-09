@@ -86,8 +86,8 @@ func (r *interactionService) CreateOrUpdateInteraction(ctx context.Context, inte
 		return errors.New("owner user not found")
 	}
 
-	interaction.InteractionDate = time.Now()
-	interaction.ID = fmt.Sprintf("%d", interaction.InteractionDate.UnixNano())
+	interaction.CreatedAt = time.Now()
+	interaction.ID = fmt.Sprintf("%d", interaction.CreatedAt.UnixNano())
 
 	score, err := r.CreateUserScoreByInteraction(interaction)
 	if err != nil {
@@ -162,8 +162,8 @@ func (r *interactionService) validInteraction(interaction *model.PromotionIntera
 func (r *interactionService) CreateUserScoreByInteraction(interaction *model.PromotionInteraction) (*model.UserScore, error) {
 	var score model.UserScore
 
-	score.ScoreDate = time.Now()
-	score.ID = fmt.Sprintf("%d", score.ScoreDate.UnixNano())
+	score.CreatedAt = time.Now()
+	score.ID = fmt.Sprintf("%d", score.CreatedAt.UnixNano())
 	score.UserID = interaction.OwnerUserID
 
 	points, err := r.getPointsByInteractionType(interaction.InteractionType)
@@ -199,8 +199,8 @@ func (r *interactionService) editUserStatisticByScore(ctx context.Context, user 
 
 func (r *interactionService) calculateElo(ctx context.Context, user *model.User, newPoints int) (string, error) {
 
-	rangeInDays := 7
-	scoreList, err := r.rp.GetAllUserScoreByRange(ctx, user.ID, rangeInDays)
+	initDate := time.Now().Add((24 * 7 * time.Hour) * -1)
+	scoreList, err := r.rp.GetAllUserScoreByTimeWithUserId(ctx, user.ID, initDate)
 	if err != nil {
 		r.log.Error(err.Error())
 		return "", err

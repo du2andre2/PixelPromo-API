@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"pixelPromo/domain/model"
 	"pixelPromo/domain/port"
+	"strconv"
 	"strings"
 )
 
@@ -189,8 +190,18 @@ func (r *Controller) GetUserByID(ctx *gin.Context) {
 }
 
 func (r *Controller) GetUserRank(ctx *gin.Context) {
+	limitStr := ctx.Param("limit")
 
-	users, err := r.userHandler.GetUserRank(ctx)
+	if len(strings.TrimSpace(limitStr)) == 0 {
+		ctx.Writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
+	}
+
+	users, err := r.userHandler.GetUserRank(ctx, limit)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return

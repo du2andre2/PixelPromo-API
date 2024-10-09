@@ -11,6 +11,7 @@ import (
 	"pixelPromo/domain/model"
 	"pixelPromo/domain/port"
 	"strings"
+	"time"
 )
 
 func NewDynamoDBRepository(
@@ -144,16 +145,43 @@ func (r repository) CreateOrUpdateUserScore(ctx context.Context, score *model.Us
 	return err
 }
 
-func (r repository) GetAllUserScoreByRange(ctx context.Context, userID string, limit int) ([]model.UserScore, error) {
+func (r repository) GetAllUserScoreByTimeWithUserId(ctx context.Context, userID string, createdAt time.Time) ([]model.UserScore, error) {
 	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.user-score")
 
 	result, err := r.client.Scan(ctx, &dynamodb.ScanInput{
 		TableName:        aws.String(tableName),
-		FilterExpression: aws.String("userId = :userId"),
+		FilterExpression: aws.String("userId = :userId ans createdAt > :createdAt"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":userId": &types.AttributeValueMemberS{Value: userID},
+			":userId":    &types.AttributeValueMemberS{Value: userID},
+			":createdAt": &types.AttributeValueMemberS{Value: createdAt.String()},
 		},
-		Limit: aws.Int32(int32(limit)),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if result == nil || result.Items == nil {
+		return nil, nil
+	}
+
+	var scores []model.UserScore
+	err = attributevalue.UnmarshalListOfMaps(result.Items, &scores)
+	if err != nil {
+		return nil, err
+	}
+
+	return scores, nil
+}
+
+func (r repository) GetAllUserScoreByTime(ctx context.Context, createdAt time.Time) ([]model.UserScore, error) {
+	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.user-score")
+
+	result, err := r.client.Scan(ctx, &dynamodb.ScanInput{
+		TableName:        aws.String(tableName),
+		FilterExpression: aws.String("createdAt > :createdAt"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":createdAt": &types.AttributeValueMemberS{Value: createdAt.String()},
+		},
 	})
 	if err != nil {
 		return nil, err

@@ -3,6 +3,7 @@ package port
 import (
 	"context"
 	"pixelPromo/domain/model"
+	"time"
 )
 
 type Repository interface {
@@ -12,7 +13,8 @@ type Repository interface {
 	GetCommentsByPromotionID(context.Context, string) ([]model.PromotionInteraction, error)
 	CreateOrUpdateUser(context.Context, *model.User) error
 	CreateOrUpdateUserScore(context.Context, *model.UserScore) error
-	GetAllUserScoreByRange(context.Context, string, int) ([]model.UserScore, error)
+	GetAllUserScoreByTimeWithUserId(context.Context, string, time.Time) ([]model.UserScore, error)
+	GetAllUserScoreByTime(context.Context, time.Time) ([]model.UserScore, error)
 	GetUserByID(context.Context, string) (*model.User, error)
 	GetAllUsers(context.Context) ([]model.User, error)
 	GetUserByEmailAndPassword(context.Context, string, string) (*model.User, error)
