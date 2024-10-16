@@ -12,24 +12,18 @@ import (
 )
 
 type Controller struct {
-	interactionHandler port.InteractionHandler
-	promotionHandler   port.PromotionHandler
-	userHandler        port.UserHandler
+	handler port.Handler
 }
 
 func NewController(
-	interactionHandler port.InteractionHandler,
-	promotionHandler port.PromotionHandler,
-	userHandler port.UserHandler,
+	handler port.Handler,
 ) *Controller {
 	return &Controller{
-		interactionHandler: interactionHandler,
-		promotionHandler:   promotionHandler,
-		userHandler:        userHandler,
+		handler: handler,
 	}
 }
 
-func (r *Controller) GetInteractionByID(ctx *gin.Context) {
+func (r *Controller) GetInteractionStatisticsByPromotionID(ctx *gin.Context) {
 	id := ctx.Param("id")
 
 	if len(strings.TrimSpace(id)) == 0 {
@@ -37,30 +31,7 @@ func (r *Controller) GetInteractionByID(ctx *gin.Context) {
 		return
 	}
 
-	interaction, err := r.interactionHandler.GetInteractionByID(ctx, id)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
-		return
-	}
-
-	if interaction == nil {
-		ctx.Writer.WriteHeader(http.StatusNoContent)
-		return
-	}
-
-	ctx.IndentedJSON(http.StatusOK, interaction)
-	return
-}
-
-func (r *Controller) GetInteractionsCountersByPromotionID(ctx *gin.Context) {
-	id := ctx.Param("id")
-
-	if len(strings.TrimSpace(id)) == 0 {
-		ctx.Writer.WriteHeader(http.StatusNoContent)
-		return
-	}
-
-	counters, err := r.interactionHandler.GetInteractionsCountersByPromotionID(ctx, id)
+	counters, err := r.handler.GetInteractionStatisticsByPromotionID(ctx, id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
@@ -83,7 +54,7 @@ func (r *Controller) GetCommentsByPromotionID(ctx *gin.Context) {
 		return
 	}
 
-	promotion, err := r.interactionHandler.GetCommentsByPromotionID(ctx, id)
+	promotion, err := r.handler.GetCommentsByPromotionID(ctx, id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
@@ -107,7 +78,7 @@ func (r *Controller) CreateInteraction(ctx *gin.Context) {
 		return
 	}
 
-	err = r.interactionHandler.CreateOrUpdateInteraction(ctx, &interaction)
+	err = r.handler.CreateInteraction(ctx, &interaction)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
@@ -125,7 +96,7 @@ func (r *Controller) CreateUser(ctx *gin.Context) {
 		return
 	}
 
-	err = r.userHandler.CreateUser(ctx, &user)
+	err = r.handler.CreateUser(ctx, &user)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
@@ -158,7 +129,7 @@ func (r *Controller) UpdateUserPicture(ctx *gin.Context) {
 
 	fileBytes := bytes.NewReader(buffer)
 
-	err = r.userHandler.UpdateUserPicture(ctx, id, fileBytes)
+	err = r.handler.UpdateUserPicture(ctx, id, fileBytes)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
@@ -175,7 +146,7 @@ func (r *Controller) GetUserByID(ctx *gin.Context) {
 		return
 	}
 
-	user, err := r.userHandler.GetUserByID(ctx, id)
+	user, err := r.handler.GetUserByID(ctx, id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
@@ -190,7 +161,7 @@ func (r *Controller) GetUserByID(ctx *gin.Context) {
 }
 
 func (r *Controller) GetUserRank(ctx *gin.Context) {
-	limitStr := ctx.Param("limit")
+	limitStr, _ := ctx.GetQuery("limit")
 
 	if len(strings.TrimSpace(limitStr)) == 0 {
 		ctx.Writer.WriteHeader(http.StatusNoContent)
@@ -201,7 +172,7 @@ func (r *Controller) GetUserRank(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 	}
 
-	users, err := r.userHandler.GetUserRank(ctx, limit)
+	users, err := r.handler.GetUserRank(ctx, limit)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
@@ -223,7 +194,7 @@ func (r *Controller) Login(ctx *gin.Context) {
 		return
 	}
 
-	user, err := r.userHandler.Login(ctx, &login)
+	user, err := r.handler.Login(ctx, &login)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
@@ -246,7 +217,7 @@ func (r *Controller) CreatePromotion(ctx *gin.Context) {
 		return
 	}
 
-	err = r.promotionHandler.CreatePromotion(ctx, &promotion)
+	err = r.handler.CreatePromotion(ctx, &promotion)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
@@ -279,7 +250,7 @@ func (r *Controller) UpdatePromotionImage(ctx *gin.Context) {
 
 	fileBytes := bytes.NewReader(buffer)
 
-	err = r.promotionHandler.UpdatePromotionImage(ctx, id, fileBytes)
+	err = r.handler.UpdatePromotionImage(ctx, id, fileBytes)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
@@ -296,7 +267,30 @@ func (r *Controller) GetPromotionByID(ctx *gin.Context) {
 		return
 	}
 
-	promotion, err := r.promotionHandler.GetPromotionByID(ctx, id)
+	promotion, err := r.handler.GetPromotionByID(ctx, id)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
+		return
+	}
+
+	if promotion == nil {
+		ctx.Writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	ctx.IndentedJSON(http.StatusOK, promotion)
+	return
+}
+
+func (r *Controller) GetFavoritesPromotionsByUserID(ctx *gin.Context) {
+	id := ctx.Param("id")
+
+	if len(strings.TrimSpace(id)) == 0 {
+		ctx.Writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	promotion, err := r.handler.GetFavoritesPromotionsByUserID(ctx, id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
@@ -320,30 +314,7 @@ func (r *Controller) GetPromotions(ctx *gin.Context) {
 		Search:     search,
 		Categories: categories,
 	}
-	promotions, err := r.promotionHandler.GetPromotions(ctx, params)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
-		return
-	}
-
-	if promotions == nil || len(promotions) == 0 {
-		ctx.Writer.WriteHeader(http.StatusNoContent)
-		return
-	}
-
-	ctx.IndentedJSON(http.StatusOK, promotions)
-	return
-}
-
-func (r *Controller) GetPromotionByCategory(ctx *gin.Context) {
-	category := ctx.Param("category")
-
-	if len(strings.TrimSpace(category)) == 0 {
-		ctx.Writer.WriteHeader(http.StatusNoContent)
-		return
-	}
-
-	promotions, err := r.promotionHandler.GetPromotionsByCategory(ctx, category)
+	promotions, err := r.handler.GetPromotions(ctx, params)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
@@ -360,7 +331,7 @@ func (r *Controller) GetPromotionByCategory(ctx *gin.Context) {
 
 func (r *Controller) GetCategories(ctx *gin.Context) {
 
-	categories, err := r.promotionHandler.GetCategories(ctx)
+	categories, err := r.handler.GetCategories(ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return

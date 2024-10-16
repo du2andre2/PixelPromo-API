@@ -42,6 +42,10 @@ func (p *PromotionInteraction) IsValidType() bool {
 
 type InteractionType string
 
+func (t InteractionType) String() string {
+	return string(t)
+}
+
 const (
 	Favorite InteractionType = "favorite"
 	Like     InteractionType = "like"

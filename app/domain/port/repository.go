@@ -9,8 +9,10 @@ import (
 type Repository interface {
 	CreateOrUpdateInteraction(context.Context, *model.PromotionInteraction) error
 	GetInteractionByID(context.Context, string) (*model.PromotionInteraction, error)
+	DeleteInteraction(context.Context, string) error
 	GetInteractionsByPromotionID(context.Context, string) ([]model.PromotionInteraction, error)
-	GetCommentsByPromotionID(context.Context, string) ([]model.PromotionInteraction, error)
+	GetInteractionsByTypeWithPromotionID(context.Context, model.InteractionType, string) ([]model.PromotionInteraction, error)
+	GetInteractionsByTypeWithUserID(context.Context, model.InteractionType, string) ([]model.PromotionInteraction, error)
 	CreateOrUpdateUser(context.Context, *model.User) error
 	CreateOrUpdateUserScore(context.Context, *model.UserScore) error
 	GetAllUserScoreByTimeWithUserId(context.Context, string, time.Time) ([]model.UserScore, error)

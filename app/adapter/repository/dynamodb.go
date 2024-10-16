@@ -43,6 +43,18 @@ func (r repository) CreateOrUpdateInteraction(ctx context.Context, interaction *
 	return err
 }
 
+func (r repository) DeleteInteraction(ctx context.Context, id string) error {
+	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.promotion-interaction")
+	_, err := r.client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
+		TableName: aws.String(tableName),
+		Key: map[string]types.AttributeValue{
+			"id": &types.AttributeValueMemberS{Value: id},
+		},
+	})
+	return err
+
+}
+
 func (r repository) GetInteractionByID(ctx context.Context, id string) (*model.PromotionInteraction, error) {
 	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.promotion-interaction")
 	result, err := r.client.GetItem(ctx, &dynamodb.GetItemInput{
@@ -91,14 +103,39 @@ func (r repository) GetInteractionsByPromotionID(ctx context.Context, id string)
 	return interactions, nil
 }
 
-func (r repository) GetCommentsByPromotionID(ctx context.Context, id string) ([]model.PromotionInteraction, error) {
+func (r repository) GetInteractionsByTypeWithPromotionID(ctx context.Context, interactionType model.InteractionType, id string) ([]model.PromotionInteraction, error) {
 	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.promotion-interaction")
 	result, err := r.client.Scan(ctx, &dynamodb.ScanInput{
 		TableName:        aws.String(tableName),
 		FilterExpression: aws.String("promotionId = :promotionId AND interactionType = :interactionType"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":promotionId":     &types.AttributeValueMemberS{Value: id},
-			":interactionType": &types.AttributeValueMemberS{Value: "comment"},
+			":interactionType": &types.AttributeValueMemberS{Value: interactionType.String()},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if result == nil || result.Items == nil {
+		return nil, nil
+	}
+	var interactions []model.PromotionInteraction
+	err = attributevalue.UnmarshalListOfMaps(result.Items, &interactions)
+	if err != nil {
+		return nil, err
+	}
+
+	return interactions, nil
+}
+
+func (r repository) GetInteractionsByTypeWithUserID(ctx context.Context, interactionType model.InteractionType, id string) ([]model.PromotionInteraction, error) {
+	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.promotion-interaction")
+	result, err := r.client.Scan(ctx, &dynamodb.ScanInput{
+		TableName:        aws.String(tableName),
+		FilterExpression: aws.String("userId = :userId AND interactionType = :interactionType"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":userId":          &types.AttributeValueMemberS{Value: id},
+			":interactionType": &types.AttributeValueMemberS{Value: interactionType.String()},
 		},
 	})
 	if err != nil {
@@ -146,21 +183,23 @@ func (r repository) CreateOrUpdateUserScore(ctx context.Context, score *model.Us
 }
 
 func (r repository) GetAllUserScoreByTimeWithUserId(ctx context.Context, userID string, createdAt time.Time) ([]model.UserScore, error) {
+	createdAtISO := createdAt.Format(time.RFC3339)
 	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.user-score")
 
 	result, err := r.client.Scan(ctx, &dynamodb.ScanInput{
 		TableName:        aws.String(tableName),
-		FilterExpression: aws.String("userId = :userId ans createdAt > :createdAt"),
+		IndexName:        aws.String("CreatedAtIndex"),
+		FilterExpression: aws.String("userId = :userId AND createdAt > :createdAt"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":userId":    &types.AttributeValueMemberS{Value: userID},
-			":createdAt": &types.AttributeValueMemberS{Value: createdAt.String()},
+			":createdAt": &types.AttributeValueMemberS{Value: createdAtISO},
 		},
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to scan table %s using index %s: %w", tableName, "CreatedAtIndex", err)
 	}
 
-	if result == nil || result.Items == nil {
+	if len(result.Items) == 0 {
 		return nil, nil
 	}
 
@@ -174,20 +213,22 @@ func (r repository) GetAllUserScoreByTimeWithUserId(ctx context.Context, userID 
 }
 
 func (r repository) GetAllUserScoreByTime(ctx context.Context, createdAt time.Time) ([]model.UserScore, error) {
+	createdAtISO := createdAt.Format(time.RFC3339)
 	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.user-score")
 
 	result, err := r.client.Scan(ctx, &dynamodb.ScanInput{
 		TableName:        aws.String(tableName),
+		IndexName:        aws.String("CreatedAtIndex"),
 		FilterExpression: aws.String("createdAt > :createdAt"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":createdAt": &types.AttributeValueMemberS{Value: createdAt.String()},
+			":createdAt": &types.AttributeValueMemberS{Value: createdAtISO},
 		},
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to scan table %s using index %s: %w", tableName, "CreatedAtIndex", err)
 	}
 
-	if result == nil || result.Items == nil {
+	if len(result.Items) == 0 {
 		return nil, nil
 	}
 

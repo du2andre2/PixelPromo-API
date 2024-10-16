@@ -23,9 +23,7 @@ var AdapterModule = fx.Module("adapter",
 
 var ServiceModule = fx.Module("service",
 	fx.Provide(
-		service.NewInteractionService,
-		service.NewPromotionService,
-		service.NewUserService,
+		service.NewService,
 	),
 )
 

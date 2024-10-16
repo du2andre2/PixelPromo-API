@@ -31,7 +31,7 @@ func (r *router) setup(gin *gin.Engine) {
 	userGroup := gin.Group("/users")
 	{
 		userGroup.POST("/", r.controller.CreateUser)
-		userGroup.GET("/login", r.controller.Login)
+		userGroup.POST("/login", r.controller.Login)
 		userGroup.POST("/picture/:id", r.controller.UpdateUserPicture)
 		userGroup.GET("/:id", r.controller.GetUserByID)
 		userGroup.GET("/rank", r.controller.GetUserRank)
@@ -43,6 +43,7 @@ func (r *router) setup(gin *gin.Engine) {
 		promotionGroup.POST("/image/:id", r.controller.UpdatePromotionImage)
 		promotionGroup.GET("/", r.controller.GetPromotions)
 		promotionGroup.GET("/:id", r.controller.GetPromotionByID)
+		promotionGroup.GET("/favorites/:id", r.controller.GetFavoritesPromotionsByUserID)
 	}
 
 	categoryGroup := gin.Group("/categories")
@@ -53,9 +54,8 @@ func (r *router) setup(gin *gin.Engine) {
 	interactionGroup := gin.Group("/interactions")
 	{
 		interactionGroup.POST("/", r.controller.CreateInteraction)
-		interactionGroup.GET("/:id", r.controller.GetInteractionByID)
 		interactionGroup.GET("/comments/:id", r.controller.GetCommentsByPromotionID)
-		interactionGroup.GET("/counters/:id", r.controller.GetInteractionsCountersByPromotionID)
+		interactionGroup.GET("/statistics/:id", r.controller.GetInteractionStatisticsByPromotionID)
 
 	}
 
