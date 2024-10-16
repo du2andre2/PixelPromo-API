@@ -1,0 +1,15 @@
+meta {
+  name: GetFavoritesPromotionsByUserID
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{api-url}}/promotions/favorites/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: 1
+}

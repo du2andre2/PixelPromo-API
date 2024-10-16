@@ -5,7 +5,11 @@ meta {
 }
 
 get {
-  url: {{api-url}}/users/rank
+  url: {{api-url}}/users/rank?limit=3
   body: none
   auth: none
+}
+
+params:query {
+  limit: 3
 }
