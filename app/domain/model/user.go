@@ -13,6 +13,7 @@ type User struct {
 	Elo        string    `json:"elo" dynamodbav:"elo"`
 	CreatedAt  time.Time `json:"createdAt" dynamodbav:"createdAt"`
 }
+
 type Login struct {
 	Email    string `json:"email" dynamodbav:"email"`
 	Password string `json:"password" dynamodbav:"password"`

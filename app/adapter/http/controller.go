@@ -3,12 +3,14 @@ package http
 import (
 	"bytes"
 	"errors"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"pixelPromo/domain/model"
 	"pixelPromo/domain/port"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Controller struct {
@@ -102,7 +104,7 @@ func (r *Controller) CreateUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.IndentedJSON(http.StatusOK, user)
+	ctx.IndentedJSON(http.StatusCreated, user)
 }
 
 func (r *Controller) UpdateUserPicture(ctx *gin.Context) {
@@ -205,7 +207,31 @@ func (r *Controller) Login(ctx *gin.Context) {
 		return
 	}
 
-	ctx.IndentedJSON(http.StatusOK, user)
+	expirationTime := time.Now().Add(1 * time.Hour)
+	claims := &Claims{
+		Username: login.Email,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: expirationTime.Unix(),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(jwtKey)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate token"})
+		return
+	}
+
+	type loginStr struct {
+		Token string      `json:"token"`
+		User  *model.User `json:"user"`
+	}
+
+	response := loginStr{
+		Token: tokenString,
+		User:  user,
+	}
+	ctx.JSON(http.StatusOK, response)
 }
 
 func (r *Controller) CreatePromotion(ctx *gin.Context) {

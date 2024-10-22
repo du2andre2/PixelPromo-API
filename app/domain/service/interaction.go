@@ -41,13 +41,24 @@ func (s *service) GetInteractionStatisticsByPromotionID(ctx context.Context, id 
 
 func (s *service) CreateInteraction(ctx context.Context, newInteraction *model.PromotionInteraction) error {
 
+	promotion, err := s.rp.GetPromotionByID(ctx, newInteraction.PromotionID)
+	if err != nil {
+		s.log.Error(err.Error())
+		return err
+	}
+	if promotion == nil {
+		return errors.New("promotion not found")
+	}
+
+	newInteraction.OwnerUserID = promotion.UserID
 	newInteraction.CreatedAt = time.Now()
 	newInteraction.ID = fmt.Sprintf("%s#%s#%s#%s", newInteraction.UserID, newInteraction.OwnerUserID, newInteraction.PromotionID, newInteraction.InteractionType.String())
+
 	if newInteraction.InteractionType == model.Create || newInteraction.InteractionType == model.Comment {
 		newInteraction.ID = fmt.Sprintf("%s#%s", newInteraction.ID, newInteraction.CreatedAt.String())
 	}
 
-	err := s.validInteraction(newInteraction)
+	err = s.validInteraction(newInteraction)
 	if err != nil {
 		s.log.Error(err.Error())
 		return err

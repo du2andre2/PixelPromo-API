@@ -1,15 +1,19 @@
 meta {
   name: GetUserRank
   type: http
-  seq: 5
+  seq: 4
 }
 
 get {
   url: {{api-url}}/users/rank?limit=3
   body: none
-  auth: none
+  auth: bearer
 }
 
 params:query {
   limit: 3
+}
+
+auth:bearer {
+  token: {{token}}
 }
