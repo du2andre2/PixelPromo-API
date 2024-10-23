@@ -6,10 +6,14 @@ meta {
 
 post {
   url: {{api-url}}/users/picture/:id
-  body: none
+  body: multipartForm
   auth: none
 }
 
 params:path {
-  id: 
+  id: 1
+}
+
+body:multipart-form {
+  image: @file(C:\Users\du2an\OneDrive\Desktop\TCC\gradient.png)
 }

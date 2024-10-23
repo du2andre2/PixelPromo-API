@@ -10,30 +10,81 @@ aws dynamodb create-table \
     --table-name pp-user-catalog \
     --attribute-definitions \
         AttributeName=id,AttributeType=S \
+        AttributeName=createdAt,AttributeType=S \
     --key-schema \
         AttributeName=id,KeyType=HASH \
     --provisioned-throughput \
         ReadCapacityUnits=5,WriteCapacityUnits=5 \
+    --global-secondary-indexes \
+        "[
+            {
+                \"IndexName\": \"CreatedAtIndex\",
+                \"KeySchema\": [
+                    {\"AttributeName\":\"createdAt\",\"KeyType\":\"HASH\"}
+                ],
+                \"Projection\":{
+                    \"ProjectionType\":\"ALL\"
+                },
+                \"ProvisionedThroughput\": {
+                    \"ReadCapacityUnits\": 5,
+                    \"WriteCapacityUnits\": 5
+                }
+            }
+        ]" \
     --endpoint-url http://localhost:4566 > /dev/null
 
 aws dynamodb create-table \
     --table-name pp-promotion-catalog \
     --attribute-definitions \
         AttributeName=id,AttributeType=S \
+        AttributeName=createdAt,AttributeType=S \
     --key-schema \
         AttributeName=id,KeyType=HASH \
     --provisioned-throughput \
         ReadCapacityUnits=5,WriteCapacityUnits=5 \
+    --global-secondary-indexes \
+        "[
+            {
+                \"IndexName\": \"CreatedAtIndex\",
+                \"KeySchema\": [
+                    {\"AttributeName\":\"createdAt\",\"KeyType\":\"HASH\"}
+                ],
+                \"Projection\":{
+                    \"ProjectionType\":\"ALL\"
+                },
+                \"ProvisionedThroughput\": {
+                    \"ReadCapacityUnits\": 5,
+                    \"WriteCapacityUnits\": 5
+                }
+            }
+        ]" \
     --endpoint-url http://localhost:4566 > /dev/null
 
 aws dynamodb create-table \
     --table-name pp-promotion-interaction \
     --attribute-definitions \
         AttributeName=id,AttributeType=S \
+        AttributeName=createdAt,AttributeType=S \
     --key-schema \
         AttributeName=id,KeyType=HASH \
     --provisioned-throughput \
         ReadCapacityUnits=5,WriteCapacityUnits=5 \
+    --global-secondary-indexes \
+        "[
+            {
+                \"IndexName\": \"CreatedAtIndex\",
+                \"KeySchema\": [
+                    {\"AttributeName\":\"createdAt\",\"KeyType\":\"HASH\"}
+                ],
+                \"Projection\":{
+                    \"ProjectionType\":\"ALL\"
+                },
+                \"ProvisionedThroughput\": {
+                    \"ReadCapacityUnits\": 5,
+                    \"WriteCapacityUnits\": 5
+                }
+            }
+        ]" \
     --endpoint-url http://localhost:4566 > /dev/null
 
 aws dynamodb create-table \
@@ -50,16 +101,29 @@ aws dynamodb create-table \
     --table-name pp-user-score \
     --attribute-definitions \
         AttributeName=id,AttributeType=S \
+        AttributeName=createdAt,AttributeType=S \
     --key-schema \
         AttributeName=id,KeyType=HASH \
     --provisioned-throughput \
         ReadCapacityUnits=5,WriteCapacityUnits=5 \
+    --global-secondary-indexes \
+        "[
+            {
+                \"IndexName\": \"CreatedAtIndex\",
+                \"KeySchema\": [
+                    {\"AttributeName\":\"createdAt\",\"KeyType\":\"HASH\"}
+                ],
+                \"Projection\":{
+                    \"ProjectionType\":\"ALL\"
+                },
+                \"ProvisionedThroughput\": {
+                    \"ReadCapacityUnits\": 5,
+                    \"WriteCapacityUnits\": 5
+                }
+            }
+        ]" \
     --endpoint-url http://localhost:4566 > /dev/null
 
-
-echo tabelas criadas:
-
-aws dynamodb list-tables --endpoint-url http://localhost:4566
 
 echo criando buckets
 

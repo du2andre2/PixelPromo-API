@@ -27,12 +27,12 @@ type PromotionInteraction struct {
 	OwnerUserID     string          `json:"ownerUserId" dynamodbav:"ownerUserId"`
 	UserID          string          `json:"userId" dynamodbav:"userId"`
 	Comment         string          `json:"comment" dynamodbav:"comment"`
-	Type            InteractionType `json:"type" dynamodbav:"type"`
-	InteractionDate time.Time       `json:"interactionDate" dynamodbav:"interactionDate"`
+	InteractionType InteractionType `json:"interactionType" dynamodbav:"interactionType"`
+	CreatedAt       time.Time       `json:"createdAt" dynamodbav:"createdAt"`
 }
 
 func (p *PromotionInteraction) IsValidType() bool {
-	switch p.Type {
+	switch p.InteractionType {
 	case Create, Comment, Favorite, Like:
 		return true
 	default:
@@ -41,6 +41,10 @@ func (p *PromotionInteraction) IsValidType() bool {
 }
 
 type InteractionType string
+
+func (t InteractionType) String() string {
+	return string(t)
+}
 
 const (
 	Favorite InteractionType = "favorite"

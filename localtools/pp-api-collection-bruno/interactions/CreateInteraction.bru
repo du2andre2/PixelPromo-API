@@ -6,6 +6,15 @@ meta {
 
 post {
   url: {{api-url}}/interactions
-  body: none
+  body: json
   auth: none
+}
+
+body:json {
+  {
+      "promotionId":"4",
+      "userId":"1",
+      "interactionType":"favorite",
+      "comment":"top1"
+  }
 }

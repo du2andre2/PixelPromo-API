@@ -5,9 +5,25 @@ meta {
 }
 
 get {
-  url: {{api-url}}/interactions/:id
+  url: {{api-url}}/interactions/:id?interaction={
+    "promotionId":"1",
+    "userId":"3",
+    "ownerUserId":"2",
+    "interactionType":"favorite",
+    "comment":"top2"
+}
   body: none
   auth: none
+}
+
+params:query {
+  interaction: {
+      "promotionId":"1",
+      "userId":"3",
+      "ownerUserId":"2",
+      "interactionType":"favorite",
+      "comment":"top2"
+  }
 }
 
 params:path {

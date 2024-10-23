@@ -14,9 +14,14 @@ type User struct {
 	CreatedAt  time.Time `json:"createdAt" dynamodbav:"createdAt"`
 }
 
+type Login struct {
+	Email    string `json:"email" dynamodbav:"email"`
+	Password string `json:"password" dynamodbav:"password"`
+}
+
 type UserScore struct {
 	ID        string    `json:"id" dynamodbav:"id"` //PK
 	UserID    string    `json:"userId" dynamodbav:"userId"`
 	Points    int       `json:"points" dynamodbav:"points"`
-	ScoreDate time.Time `json:"scoreDate" dynamodbav:"scoreDate"`
+	CreatedAt time.Time `json:"createdAt" dynamodbav:"createdAt"`
 }

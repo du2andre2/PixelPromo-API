@@ -1,0 +1,22 @@
+meta {
+  name: Auth
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{api-url}}/auth
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+      "email":"edu@gmail.com",
+      "password":"12345678"
+  }
+}
+
+script:post-response {
+  bru.setVar("token", res.body.token);
+}

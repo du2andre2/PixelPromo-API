@@ -1,0 +1,15 @@
+meta {
+  name: GetInteractionStatisticsByPromotionID
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{api-url}}/interactions/statistics/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: 2
+}
