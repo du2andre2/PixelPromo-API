@@ -374,16 +374,23 @@ func (r repository) GetPromotionsWithParams(ctx context.Context, query *model.Pr
 		filterExpr = strings.Join(filterExprs, " AND ")
 	}
 
+	limit := &query.Limit
+	if query.Limit == 0 {
+		limit = nil
+	}
+
 	var scanInput dynamodb.ScanInput
 	if len(filterExprs) > 0 {
 		scanInput = dynamodb.ScanInput{
 			TableName:                 aws.String(tableName),
 			FilterExpression:          aws.String(filterExpr),
 			ExpressionAttributeValues: exprAttrValues,
+			Limit:                     limit,
 		}
 	} else {
 		scanInput = dynamodb.ScanInput{
 			TableName: aws.String(tableName),
+			Limit:     limit,
 		}
 	}
 

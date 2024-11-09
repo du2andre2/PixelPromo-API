@@ -335,10 +335,16 @@ func (r *Controller) GetPromotions(ctx *gin.Context) {
 
 	categories, _ := ctx.GetQueryArray("category")
 	search, _ := ctx.GetQuery("search")
+	limit, _ := ctx.GetQuery("limit")
+	var limitInt int
+	if limit != "" {
+		limitInt, _ = strconv.Atoi(limit)
+	}
 
 	params := &model.PromotionQuery{
 		Search:     search,
 		Categories: categories,
+		Limit:      int32(limitInt),
 	}
 	promotions, err := r.handler.GetPromotions(ctx, params)
 	if err != nil {
