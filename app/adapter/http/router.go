@@ -52,7 +52,7 @@ func (r *router) setup(gin *gin.Engine) {
 	gin.POST("/users", r.controller.CreateUser)
 
 	userGroup := gin.Group("/users")
-	userGroup.Use(authMiddleware())
+	//userGroup.Use(authMiddleware())
 	{
 		userGroup.POST("/picture/:id", r.controller.UpdateUserPicture)
 		userGroup.GET(":id", r.controller.GetUserByID)
@@ -60,7 +60,7 @@ func (r *router) setup(gin *gin.Engine) {
 	}
 
 	promotionGroup := gin.Group("/promotions")
-	promotionGroup.Use(authMiddleware())
+	//promotionGroup.Use(authMiddleware())
 	{
 		promotionGroup.POST("", r.controller.CreatePromotion)
 		promotionGroup.POST("/image/:id", r.controller.UpdatePromotionImage)
@@ -70,13 +70,13 @@ func (r *router) setup(gin *gin.Engine) {
 	}
 
 	categoryGroup := gin.Group("/categories")
-	categoryGroup.Use(authMiddleware())
+	//categoryGroup.Use(authMiddleware())
 	{
 		categoryGroup.GET("", r.controller.GetCategories)
 	}
 
 	interactionGroup := gin.Group("/interactions")
-	interactionGroup.Use(authMiddleware())
+	//interactionGroup.Use(authMiddleware())
 	{
 		interactionGroup.POST("", r.controller.CreateInteraction)
 		interactionGroup.GET("/comments/:id", r.controller.GetCommentsByPromotionID)
@@ -95,7 +95,6 @@ func authMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// Remover prefixo "Bearer " do token
 		if strings.HasPrefix(tokenString, "Bearer ") {
 			tokenString = strings.TrimPrefix(tokenString, "Bearer ")
 		}
