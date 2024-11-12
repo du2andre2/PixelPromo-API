@@ -1,0 +1,16 @@
+meta {
+  name: GetInteractionStatisticsByUserIDWithPromotionID
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{api-url}}/interactions/promotion-user-statistics?userID=1&promotionID=2
+  body: none
+  auth: none
+}
+
+params:query {
+  userID: 1
+  promotionID: 2
+}

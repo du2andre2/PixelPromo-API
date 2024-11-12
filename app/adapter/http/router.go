@@ -81,6 +81,8 @@ func (r *router) setup(gin *gin.Engine) {
 		interactionGroup.POST("", r.controller.CreateInteraction)
 		interactionGroup.GET("/comments/:id", r.controller.GetCommentsByPromotionID)
 		interactionGroup.GET("/statistics/:id", r.controller.GetInteractionStatisticsByPromotionID)
+		interactionGroup.GET("/user-statistics/:id", r.controller.GetInteractionStatisticsByUserID)
+		interactionGroup.GET("/promotion-user-statistics", r.controller.GetInteractionStatisticsByUserIDWithPromotionID)
 	}
 
 	return

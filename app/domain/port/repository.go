@@ -11,6 +11,8 @@ type Repository interface {
 	GetInteractionByID(context.Context, string) (*model.PromotionInteraction, error)
 	DeleteInteraction(context.Context, string) error
 	GetInteractionsByPromotionID(context.Context, string) ([]model.PromotionInteraction, error)
+	GetInteractionsByUserID(context.Context, string) ([]model.PromotionInteraction, error)
+	GetInteractionsByUserIDWithPromotionID(context.Context, string, string) ([]model.PromotionInteraction, error)
 	GetInteractionsByTypeWithPromotionID(context.Context, model.InteractionType, string) ([]model.PromotionInteraction, error)
 	GetInteractionsByTypeWithUserID(context.Context, model.InteractionType, string) ([]model.PromotionInteraction, error)
 	CreateOrUpdateUser(context.Context, *model.User) error

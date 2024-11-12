@@ -39,6 +39,44 @@ func (s *service) GetInteractionStatisticsByPromotionID(ctx context.Context, id 
 	return counters, nil
 }
 
+func (s *service) GetInteractionStatisticsByUserID(ctx context.Context, id string) (map[string]int, error) {
+	interactions, err := s.rp.GetInteractionsByUserID(ctx, id)
+	if err != nil {
+		s.log.Error(err.Error())
+		return nil, err
+	}
+
+	counters := map[string]int{
+		"favorite": 0,
+		"like":     0,
+		"comment":  0,
+		"create":   0,
+	}
+	for _, interaction := range interactions {
+		counters[string(interaction.InteractionType)] += 1
+	}
+
+	return counters, nil
+}
+
+func (s *service) GetInteractionStatisticsByUserIDWithPromotionID(ctx context.Context, userID string, promotionID string) (map[string]bool, error) {
+	interactions, err := s.rp.GetInteractionsByUserIDWithPromotionID(ctx, userID, promotionID)
+	if err != nil {
+		s.log.Error(err.Error())
+		return nil, err
+	}
+
+	counters := map[string]bool{
+		"favorite": false,
+		"like":     false,
+	}
+	for _, interaction := range interactions {
+		counters[string(interaction.InteractionType)] = true
+	}
+
+	return counters, nil
+}
+
 func (s *service) CreateInteraction(ctx context.Context, newInteraction *model.PromotionInteraction) error {
 
 	promotion, err := s.rp.GetPromotionByID(ctx, newInteraction.PromotionID)

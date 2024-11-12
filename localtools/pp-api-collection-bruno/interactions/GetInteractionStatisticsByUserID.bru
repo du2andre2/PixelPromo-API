@@ -1,0 +1,15 @@
+meta {
+  name: GetInteractionStatisticsByUserID
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{api-url}}/interactions/user-statistics/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: 1
+}

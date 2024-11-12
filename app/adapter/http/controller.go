@@ -48,6 +48,53 @@ func (r *Controller) GetInteractionStatisticsByPromotionID(ctx *gin.Context) {
 	return
 }
 
+func (r *Controller) GetInteractionStatisticsByUserID(ctx *gin.Context) {
+	id := ctx.Param("id")
+
+	if len(strings.TrimSpace(id)) == 0 {
+		ctx.Writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	counters, err := r.handler.GetInteractionStatisticsByUserID(ctx, id)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
+		return
+	}
+
+	if len(counters) == 0 {
+		ctx.Writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	ctx.IndentedJSON(http.StatusOK, counters)
+	return
+}
+
+func (r *Controller) GetInteractionStatisticsByUserIDWithPromotionID(ctx *gin.Context) {
+	userID, userIDExist := ctx.GetQuery("userID")
+	promotionID, promotionIDExist := ctx.GetQuery("promotionID")
+
+	if !userIDExist || !promotionIDExist {
+		ctx.Writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	counters, err := r.handler.GetInteractionStatisticsByUserIDWithPromotionID(ctx, userID, promotionID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
+		return
+	}
+
+	if len(counters) == 0 {
+		ctx.Writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	ctx.IndentedJSON(http.StatusOK, counters)
+	return
+}
+
 func (r *Controller) GetCommentsByPromotionID(ctx *gin.Context) {
 	id := ctx.Param("id")
 

@@ -103,6 +103,54 @@ func (r repository) GetInteractionsByPromotionID(ctx context.Context, id string)
 	return interactions, nil
 }
 
+func (r repository) GetInteractionsByUserID(ctx context.Context, id string) ([]model.PromotionInteraction, error) {
+	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.promotion-interaction")
+	result, err := r.client.Scan(ctx, &dynamodb.ScanInput{
+		TableName:        aws.String(tableName),
+		FilterExpression: aws.String("ownerUserId = :ownerUserId"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":ownerUserId": &types.AttributeValueMemberS{Value: id},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if result == nil || result.Items == nil {
+		return nil, nil
+	}
+	var interactions []model.PromotionInteraction
+	err = attributevalue.UnmarshalListOfMaps(result.Items, &interactions)
+	if err != nil {
+		return nil, err
+	}
+
+	return interactions, nil
+}
+func (r repository) GetInteractionsByUserIDWithPromotionID(ctx context.Context, userID string, promotionID string) ([]model.PromotionInteraction, error) {
+	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.promotion-interaction")
+	result, err := r.client.Scan(ctx, &dynamodb.ScanInput{
+		TableName:        aws.String(tableName),
+		FilterExpression: aws.String("promotionId = :promotionId AND userId = :userId"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":userId":      &types.AttributeValueMemberS{Value: userID},
+			":promotionId": &types.AttributeValueMemberS{Value: promotionID},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if result == nil || result.Items == nil {
+		return nil, nil
+	}
+	var interactions []model.PromotionInteraction
+	err = attributevalue.UnmarshalListOfMaps(result.Items, &interactions)
+	if err != nil {
+		return nil, err
+	}
+
+	return interactions, nil
+}
+
 func (r repository) GetInteractionsByTypeWithPromotionID(ctx context.Context, interactionType model.InteractionType, id string) ([]model.PromotionInteraction, error) {
 	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.promotion-interaction")
 	result, err := r.client.Scan(ctx, &dynamodb.ScanInput{
