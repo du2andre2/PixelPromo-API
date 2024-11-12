@@ -55,6 +55,8 @@ func (r *router) setup(gin *gin.Engine) {
 	//userGroup.Use(authMiddleware())
 	{
 		userGroup.POST("/picture/:id", r.controller.UpdateUserPicture)
+		userGroup.PATCH("", r.controller.UpdateUser)
+		userGroup.DELETE(":id", r.controller.DeleteUser)
 		userGroup.GET(":id", r.controller.GetUserByID)
 		userGroup.GET("/rank", r.controller.GetUserRank)
 	}
@@ -63,6 +65,8 @@ func (r *router) setup(gin *gin.Engine) {
 	//promotionGroup.Use(authMiddleware())
 	{
 		promotionGroup.POST("", r.controller.CreatePromotion)
+		promotionGroup.DELETE(":id", r.controller.DeletePromotion)
+		promotionGroup.PATCH("", r.controller.UpdatePromotion)
 		promotionGroup.POST("/image/:id", r.controller.UpdatePromotionImage)
 		promotionGroup.GET("", r.controller.GetPromotions) // queryParams: []category, search
 		promotionGroup.GET(":id", r.controller.GetPromotionByID)

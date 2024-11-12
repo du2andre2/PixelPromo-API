@@ -373,6 +373,30 @@ func (r repository) CreateOrUpdatePromotion(ctx context.Context, promotion *mode
 	return err
 }
 
+func (r repository) DeletePromotion(ctx context.Context, promotionID string) error {
+
+	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.promotion")
+	_, err := r.client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
+		Key: map[string]types.AttributeValue{
+			"id": &types.AttributeValueMemberS{Value: promotionID},
+		},
+		TableName: aws.String(tableName),
+	})
+	return err
+}
+
+func (r repository) DeleteUser(ctx context.Context, userID string) error {
+
+	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.user")
+	_, err := r.client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
+		Key: map[string]types.AttributeValue{
+			"id": &types.AttributeValueMemberS{Value: userID},
+		},
+		TableName: aws.String(tableName),
+	})
+	return err
+}
+
 func (r repository) GetPromotionByID(ctx context.Context, id string) (*model.Promotion, error) {
 	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.promotion")
 	result, err := r.client.GetItem(ctx, &dynamodb.GetItemInput{

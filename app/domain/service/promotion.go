@@ -39,7 +39,51 @@ func (s *service) CreatePromotion(ctx context.Context, promotion *model.Promotio
 		return err
 	}
 
-	s.log.Debug("user created")
+	s.log.Debug("promotion created")
+	return nil
+}
+
+func (s *service) DeletePromotion(ctx context.Context, promotionID string) error {
+
+	if err := s.rp.DeletePromotion(ctx, promotionID); err != nil {
+		s.log.Error(err.Error())
+		return err
+	}
+
+	s.log.Debug("promotion deleted")
+	return nil
+}
+func (s *service) UpdatePromotion(ctx context.Context, newPromotion *model.Promotion) error {
+	err := s.validPromotion(ctx, newPromotion)
+	if err != nil {
+		s.log.Error(err.Error())
+		return err
+	}
+
+	if newPromotion.ID == "" {
+		err = errors.New("promotion id is empty")
+		s.log.Error(err.Error())
+		return err
+	}
+
+	promotion, err := s.rp.GetPromotionByID(ctx, newPromotion.ID)
+	if err != nil {
+		s.log.Error(err.Error())
+		return err
+	}
+
+	if promotion == nil {
+		err = errors.New("promotion not found")
+		s.log.Error(err.Error())
+		return err
+	}
+
+	if err = s.rp.CreateOrUpdatePromotion(ctx, newPromotion); err != nil {
+		s.log.Error(err.Error())
+		return err
+	}
+
+	s.log.Debug("promotion updated")
 	return nil
 }
 

@@ -32,6 +32,40 @@ func (s *service) CreateUser(ctx context.Context, user *model.User) error {
 	return nil
 }
 
+func (s *service) UpdateUser(ctx context.Context, user *model.User) error {
+
+	err := s.validUser(user)
+	if err != nil {
+		s.log.Error(err.Error())
+		return err
+	}
+
+	if user.ID == "" {
+		err = errors.New("user id is empty")
+		s.log.Error(err.Error())
+		return err
+	}
+
+	if err = s.rp.CreateOrUpdateUser(ctx, user); err != nil {
+		s.log.Error(err.Error())
+		return err
+	}
+
+	s.log.Debug("user created")
+	return nil
+}
+
+func (s *service) DeleteUser(ctx context.Context, id string) error {
+	if err := s.rp.DeleteUser(ctx, id); err != nil {
+		s.log.Error(err.Error())
+		return err
+	}
+
+	s.log.Debug("promotion deleted")
+
+	return nil
+}
+
 func (s *service) UpdateUserPicture(ctx context.Context, id string, image io.Reader) error {
 
 	user, err := s.rp.GetUserByID(ctx, id)

@@ -153,6 +153,40 @@ func (r *Controller) CreateUser(ctx *gin.Context) {
 
 	ctx.IndentedJSON(http.StatusCreated, user)
 }
+func (r *Controller) UpdateUser(ctx *gin.Context) {
+
+	var user model.User
+	err := ctx.ShouldBindJSON(&user)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
+		return
+	}
+
+	err = r.handler.UpdateUser(ctx, &user)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
+		return
+	}
+
+	ctx.IndentedJSON(http.StatusCreated, user)
+}
+
+func (r *Controller) DeleteUser(ctx *gin.Context) {
+	id := ctx.Param("id")
+
+	if len(strings.TrimSpace(id)) == 0 {
+		ctx.Writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	err := r.handler.DeleteUser(ctx, id)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
+		return
+	}
+
+	ctx.IndentedJSON(http.StatusOK, gin.H{"message": "User deleted"})
+}
 
 func (r *Controller) UpdateUserPicture(ctx *gin.Context) {
 	id := ctx.Param("id")
@@ -291,6 +325,41 @@ func (r *Controller) CreatePromotion(ctx *gin.Context) {
 	}
 
 	err = r.handler.CreatePromotion(ctx, &promotion)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
+		return
+	}
+
+	ctx.IndentedJSON(http.StatusOK, promotion)
+}
+
+func (r *Controller) DeletePromotion(ctx *gin.Context) {
+	id := ctx.Param("id")
+
+	if len(strings.TrimSpace(id)) == 0 {
+		ctx.Writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	err := r.handler.DeletePromotion(ctx, id)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
+		return
+	}
+
+	ctx.IndentedJSON(http.StatusOK, gin.H{"message": "Promotion deleted"})
+}
+
+func (r *Controller) UpdatePromotion(ctx *gin.Context) {
+
+	var promotion model.Promotion
+	err := ctx.ShouldBindJSON(&promotion)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
+		return
+	}
+
+	err = r.handler.UpdatePromotion(ctx, &promotion)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return

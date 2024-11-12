@@ -15,11 +15,15 @@ type Handler interface {
 
 	CreateUser(context.Context, *model.User) error
 	UpdateUserPicture(context.Context, string, io.Reader) error
+	UpdateUser(context.Context, *model.User) error
+	DeleteUser(context.Context, string) error
 	GetUserByID(context.Context, string) (*model.User, error)
 	GetUserRank(context.Context, int) ([]model.User, error)
 	Login(context.Context, *model.Login) (*model.User, error)
 
 	CreatePromotion(context.Context, *model.Promotion) error
+	DeletePromotion(context.Context, string) error
+	UpdatePromotion(context.Context, *model.Promotion) error
 	UpdatePromotionImage(context.Context, string, io.Reader) error
 	GetPromotionByID(context.Context, string) (*model.Promotion, error)
 	GetFavoritesPromotionsByUserID(context.Context, string) ([]model.Promotion, error)
