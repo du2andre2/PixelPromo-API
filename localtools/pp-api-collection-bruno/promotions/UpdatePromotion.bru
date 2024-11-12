@@ -4,7 +4,7 @@ meta {
   seq: 7
 }
 
-post {
+patch {
   url: {{api-url}}/promotions/
   body: json
   auth: none
@@ -12,8 +12,9 @@ post {
 
 body:json {
   {
+      "id": "1731426310007828200",
       "userId": "2",
-      "title": "jogo 1",
+      "title": "jogo 1731426310007828200",
       "description": "jogo 1 na promoção",
       "categories": [  "fps", "rpg"] ,
       "link": "https://www.google.com",
