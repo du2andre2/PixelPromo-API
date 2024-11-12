@@ -402,8 +402,14 @@ func (r repository) GetPromotionsWithParams(ctx context.Context, query *model.Pr
 	var filterExprs []string
 	exprAttrValues := map[string]types.AttributeValue{}
 
+	if query.UserID != "" {
+		userIDExpr := "userId = :userId"
+		filterExprs = append(filterExprs, userIDExpr)
+		exprAttrValues[":userId"] = &types.AttributeValueMemberS{Value: query.UserID}
+	}
+
 	if query.Search != "" {
-		searchExpr := "(contains(title, :search) OR contains(description, :search) OR contains(platform, :search) OR contains(link, :search))"
+		searchExpr := " (contains(title, :search) OR contains(description, :search) OR contains(platform, :search) OR contains(link, :search))"
 		filterExprs = append(filterExprs, searchExpr)
 		exprAttrValues[":search"] = &types.AttributeValueMemberS{Value: query.Search}
 	}

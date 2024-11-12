@@ -5,13 +5,14 @@ meta {
 }
 
 get {
-  url: {{api-url}}/promotions?category=rpg&category=fps
+  url: {{api-url}}/promotions?userID=1
   body: none
   auth: none
 }
 
 params:query {
-  category: rpg
-  category: fps
+  userID: 1
+  ~category: rpg
+  ~category: fps
   ~search: 12
 }

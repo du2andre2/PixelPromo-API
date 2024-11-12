@@ -56,5 +56,6 @@ const (
 type PromotionQuery struct {
 	Categories []string `json:"category"`
 	Search     string   `json:"search"`
+	UserID     string   `json:"userID"`
 	Limit      int32    `json:"limit"`
 }
