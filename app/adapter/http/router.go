@@ -41,7 +41,7 @@ func (r *router) Run() {
 func (r *router) setup(gin *gin.Engine) {
 
 	gin.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173"}, // Porta do frontend
+		AllowOrigins:     []string{"http://localhost:5173", "http://127.0.0.1:5173/"}, // Porta do frontend
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,

@@ -244,8 +244,10 @@ func (s *service) getPointsByInteractionType(interactionType model.InteractionTy
 }
 
 func (s *service) editUserStatisticByScore(ctx context.Context, user *model.User, score *model.UserScore) (*model.User, error) {
+	minimalPointsLevel := s.cfg.Viper.GetInt("service.score.level.minimalPointsLevel")
+	growthRate := s.cfg.Viper.GetFloat64("service.score.level.growthRate")
 
-	newLevel := calculateLevel(user, score.Points)
+	newLevel := calculateLevel(user, score.Points, minimalPointsLevel, growthRate)
 	newElo, err := s.calculateElo(ctx, user, score.Points)
 	if err != nil {
 		return nil, err
@@ -258,40 +260,43 @@ func (s *service) editUserStatisticByScore(ctx context.Context, user *model.User
 }
 
 func (s *service) calculateElo(ctx context.Context, user *model.User, newPoints int) (string, error) {
-
-	initDate := time.Now().Add((24 * 7 * time.Hour) * -1)
+	initDate := time.Now().AddDate(0, 0, -s.cfg.Viper.GetInt("service.score.elo.timeRangeInDays"))
 	scoreList, err := s.rp.GetAllUserScoreByTimeWithUserId(ctx, user.ID, initDate)
 	if err != nil {
 		s.log.Error(err.Error())
 		return "", err
 	}
 
-	var pointsInRange int
-	pointsInRange += newPoints
-
+	pointsInRange := newPoints
 	for _, score := range scoreList {
 		pointsInRange += score.Points
 	}
 
-	if pointsInRange >= 100 { //todo:refactor this
+	switch {
+	case pointsInRange >= s.cfg.Viper.GetInt("service.score.elo.levels.diamond.minimal-score"):
+		return "diamond", nil
+	case pointsInRange >= s.cfg.Viper.GetInt("service.score.elo.levels.platinum.minimal-score"):
+		return "platinum", nil
+	case pointsInRange >= s.cfg.Viper.GetInt("service.score.elo.levels.gold.minimal-score"):
+		return "gold", nil
+	case pointsInRange >= s.cfg.Viper.GetInt("service.score.elo.levels.silver.minimal-score"):
 		return "silver", nil
-	} else if pointsInRange >= 25 {
+	case pointsInRange >= s.cfg.Viper.GetInt("service.score.elo.levels.bronze.minimal-score"):
 		return "bronze", nil
-	} else {
+	default:
 		return "none", nil
 	}
 }
 
-func pointsRequiredForLevel(level int) int {
-	minimalPointsLevel := 10
-	growthRate := 1.30
+func pointsRequiredForLevel(level int, minimalPointsLevel int, growthRate float64) int {
 	return int(float64(minimalPointsLevel) * math.Pow(growthRate, float64(level-1)))
 }
 
-func calculateLevel(user *model.User, points int) int {
-	currentLevel := user.Level //todo: refactor this
-	for points >= pointsRequiredForLevel(currentLevel) {
-		points -= pointsRequiredForLevel(currentLevel)
+func calculateLevel(user *model.User, points int, minimalPointsLevel int, growthRate float64) int {
+
+	currentLevel := user.Level
+	for points >= pointsRequiredForLevel(currentLevel, minimalPointsLevel, growthRate) {
+		points -= pointsRequiredForLevel(currentLevel, minimalPointsLevel, growthRate)
 		currentLevel++
 	}
 	return currentLevel
