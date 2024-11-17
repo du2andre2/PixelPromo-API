@@ -55,7 +55,7 @@ func (r repository) DeleteInteraction(ctx context.Context, id string) error {
 
 }
 
-func (r repository) GetInteractionByID(ctx context.Context, id string) (*model.PromotionInteraction, error) {
+func (r repository) GetInteractionById(ctx context.Context, id string) (*model.PromotionInteraction, error) {
 	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.promotion-interaction")
 	result, err := r.client.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: aws.String(tableName),
@@ -79,7 +79,7 @@ func (r repository) GetInteractionByID(ctx context.Context, id string) (*model.P
 	return &interaction, nil
 }
 
-func (r repository) GetInteractionsByPromotionID(ctx context.Context, id string) ([]model.PromotionInteraction, error) {
+func (r repository) GetInteractionsByPromotionId(ctx context.Context, id string) ([]model.PromotionInteraction, error) {
 	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.promotion-interaction")
 	result, err := r.client.Scan(ctx, &dynamodb.ScanInput{
 		TableName:        aws.String(tableName),
@@ -103,7 +103,7 @@ func (r repository) GetInteractionsByPromotionID(ctx context.Context, id string)
 	return interactions, nil
 }
 
-func (r repository) GetInteractionsByUserID(ctx context.Context, id string) ([]model.PromotionInteraction, error) {
+func (r repository) GetInteractionsByUserId(ctx context.Context, id string) ([]model.PromotionInteraction, error) {
 	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.promotion-interaction")
 	result, err := r.client.Scan(ctx, &dynamodb.ScanInput{
 		TableName:        aws.String(tableName),
@@ -126,14 +126,14 @@ func (r repository) GetInteractionsByUserID(ctx context.Context, id string) ([]m
 
 	return interactions, nil
 }
-func (r repository) GetInteractionsByUserIDWithPromotionID(ctx context.Context, userID string, promotionID string) ([]model.PromotionInteraction, error) {
+func (r repository) GetInteractionsByUserIdWithPromotionId(ctx context.Context, userId string, promotionId string) ([]model.PromotionInteraction, error) {
 	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.promotion-interaction")
 	result, err := r.client.Scan(ctx, &dynamodb.ScanInput{
 		TableName:        aws.String(tableName),
 		FilterExpression: aws.String("promotionId = :promotionId AND userId = :userId"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":userId":      &types.AttributeValueMemberS{Value: userID},
-			":promotionId": &types.AttributeValueMemberS{Value: promotionID},
+			":userId":      &types.AttributeValueMemberS{Value: userId},
+			":promotionId": &types.AttributeValueMemberS{Value: promotionId},
 		},
 	})
 	if err != nil {
@@ -151,7 +151,7 @@ func (r repository) GetInteractionsByUserIDWithPromotionID(ctx context.Context, 
 	return interactions, nil
 }
 
-func (r repository) GetInteractionsByTypeWithPromotionID(ctx context.Context, interactionType model.InteractionType, id string) ([]model.PromotionInteraction, error) {
+func (r repository) GetInteractionsByTypeWithPromotionId(ctx context.Context, interactionType model.InteractionType, id string) ([]model.PromotionInteraction, error) {
 	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.promotion-interaction")
 	result, err := r.client.Scan(ctx, &dynamodb.ScanInput{
 		TableName:        aws.String(tableName),
@@ -176,7 +176,7 @@ func (r repository) GetInteractionsByTypeWithPromotionID(ctx context.Context, in
 	return interactions, nil
 }
 
-func (r repository) GetInteractionsByTypeWithUserID(ctx context.Context, interactionType model.InteractionType, id string) ([]model.PromotionInteraction, error) {
+func (r repository) GetInteractionsByTypeWithUserId(ctx context.Context, interactionType model.InteractionType, id string) ([]model.PromotionInteraction, error) {
 	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.promotion-interaction")
 	result, err := r.client.Scan(ctx, &dynamodb.ScanInput{
 		TableName:        aws.String(tableName),
@@ -230,7 +230,7 @@ func (r repository) CreateOrUpdateUserScore(ctx context.Context, score *model.Us
 	return err
 }
 
-func (r repository) GetAllUserScoreByTimeWithUserId(ctx context.Context, userID string, createdAt time.Time) ([]model.UserScore, error) {
+func (r repository) GetAllUserScoreByTimeWithUserId(ctx context.Context, userId string, createdAt time.Time) ([]model.UserScore, error) {
 	createdAtISO := createdAt.Format(time.RFC3339)
 	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.user-score")
 
@@ -239,7 +239,7 @@ func (r repository) GetAllUserScoreByTimeWithUserId(ctx context.Context, userID 
 		IndexName:        aws.String("CreatedAtIndex"),
 		FilterExpression: aws.String("userId = :userId AND createdAt > :createdAt"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":userId":    &types.AttributeValueMemberS{Value: userID},
+			":userId":    &types.AttributeValueMemberS{Value: userId},
 			":createdAt": &types.AttributeValueMemberS{Value: createdAtISO},
 		},
 	})
@@ -289,7 +289,7 @@ func (r repository) GetAllUserScoreByTime(ctx context.Context, createdAt time.Ti
 	return scores, nil
 }
 
-func (r repository) GetUserByID(ctx context.Context, id string) (*model.User, error) {
+func (r repository) GetUserById(ctx context.Context, id string) (*model.User, error) {
 	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.user")
 	result, err := r.client.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: aws.String(tableName),
@@ -373,31 +373,31 @@ func (r repository) CreateOrUpdatePromotion(ctx context.Context, promotion *mode
 	return err
 }
 
-func (r repository) DeletePromotion(ctx context.Context, promotionID string) error {
+func (r repository) DeletePromotion(ctx context.Context, promotionId string) error {
 
 	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.promotion")
 	_, err := r.client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
 		Key: map[string]types.AttributeValue{
-			"id": &types.AttributeValueMemberS{Value: promotionID},
+			"id": &types.AttributeValueMemberS{Value: promotionId},
 		},
 		TableName: aws.String(tableName),
 	})
 	return err
 }
 
-func (r repository) DeleteUser(ctx context.Context, userID string) error {
+func (r repository) DeleteUser(ctx context.Context, userId string) error {
 
 	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.user")
 	_, err := r.client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
 		Key: map[string]types.AttributeValue{
-			"id": &types.AttributeValueMemberS{Value: userID},
+			"id": &types.AttributeValueMemberS{Value: userId},
 		},
 		TableName: aws.String(tableName),
 	})
 	return err
 }
 
-func (r repository) GetPromotionByID(ctx context.Context, id string) (*model.Promotion, error) {
+func (r repository) GetPromotionById(ctx context.Context, id string) (*model.Promotion, error) {
 	tableName := r.cfg.Viper.GetString("aws.dynamodb.tables.promotion")
 	result, err := r.client.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: aws.String(tableName),
@@ -426,10 +426,10 @@ func (r repository) GetPromotionsWithParams(ctx context.Context, query *model.Pr
 	var filterExprs []string
 	exprAttrValues := map[string]types.AttributeValue{}
 
-	if query.UserID != "" {
-		userIDExpr := "userId = :userId"
-		filterExprs = append(filterExprs, userIDExpr)
-		exprAttrValues[":userId"] = &types.AttributeValueMemberS{Value: query.UserID}
+	if query.UserId != "" {
+		userIdExpr := "userId = :userId"
+		filterExprs = append(filterExprs, userIdExpr)
+		exprAttrValues[":userId"] = &types.AttributeValueMemberS{Value: query.UserId}
 	}
 
 	if query.Search != "" {

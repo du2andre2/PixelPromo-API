@@ -3,13 +3,12 @@ package model
 import "time"
 
 type Promotion struct {
-	ID              string    `json:"id" dynamodbav:"id"` //PK
-	UserID          string    `json:"userId" dynamodbav:"userId"`
+	Id              string    `json:"id" dynamodbav:"id"` //PK
+	UserId          string    `json:"userId" dynamodbav:"userId"`
 	Title           string    `json:"title" dynamodbav:"title"`
-	Description     string    `json:"description" dynamodbav:"description"`
-	OriginalPrice   string    `json:"originalPrice" dynamodbav:"originalPrice"`
-	DiscountedPrice string    `json:"discountedPrice" dynamodbav:"discountedPrice"`
-	DiscountBadge   string    `json:"discountBadge" dynamodbav:"discountBadge"`
+	OriginalPrice   float64   `json:"originalPrice" dynamodbav:"originalPrice"`
+	DiscountedPrice float64   `json:"discountedPrice" dynamodbav:"discountedPrice"`
+	DiscountBadge   float64   `json:"discountBadge" dynamodbav:"discountBadge"`
 	Platform        string    `json:"platform" dynamodbav:"platform"`
 	ImageUrl        string    `json:"imageUrl" dynamodbav:"imageUrl"`
 	Link            string    `json:"link" dynamodbav:"link"`
@@ -22,10 +21,10 @@ type Category struct {
 }
 
 type PromotionInteraction struct {
-	ID              string          `json:"id" dynamodbav:"id"` //PK
-	PromotionID     string          `json:"promotionId" dynamodbav:"promotionId"`
-	OwnerUserID     string          `json:"ownerUserId" dynamodbav:"ownerUserId"`
-	UserID          string          `json:"userId" dynamodbav:"userId"`
+	Id              string          `json:"id" dynamodbav:"id"` //PK
+	PromotionId     string          `json:"promotionId" dynamodbav:"promotionId"`
+	OwnerUserId     string          `json:"ownerUserId" dynamodbav:"ownerUserId"`
+	UserId          string          `json:"userId" dynamodbav:"userId"`
 	Comment         string          `json:"comment" dynamodbav:"comment"`
 	InteractionType InteractionType `json:"interactionType" dynamodbav:"interactionType"`
 	CreatedAt       time.Time       `json:"createdAt" dynamodbav:"createdAt"`
@@ -56,6 +55,6 @@ const (
 type PromotionQuery struct {
 	Categories []string `json:"category"`
 	Search     string   `json:"search"`
-	UserID     string   `json:"userID"`
+	UserId     string   `json:"userId"`
 	Limit      int32    `json:"limit"`
 }

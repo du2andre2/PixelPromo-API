@@ -10,11 +10,20 @@ patch {
   auth: none
 }
 
+headers {
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImVkdUBnbWFpbC5jb20iLCJleHAiOjE3MzI0Njk3NDd9.uxFwpsdM80TousNsIUinp8pg656oMXp7OAg33whPOJI
+}
+
 body:json {
   {
-      "id":"1",
-      "email":"edu1@gmail.com",
-      "password":"12345678",
-      "name": "edu1"
+    "id": "1",
+    "email": "edu@gmail.com",
+    "name": "edu",
+    "password": "12345678",
+    "pictureUrl": "http://localhost:4566/pp-user-pictures/perfil1.jpg",
+    "totalScore": 150,
+    "level": 8,
+    "elo": "gold",
+    "createdAt": "2024-09-01T12:34:32.5657674-03:00"
   }
 }

@@ -25,7 +25,7 @@ func NewController(
 	}
 }
 
-func (r *Controller) GetInteractionStatisticsByPromotionID(ctx *gin.Context) {
+func (r *Controller) GetInteractionStatisticsByPromotionId(ctx *gin.Context) {
 	id := ctx.Param("id")
 
 	if len(strings.TrimSpace(id)) == 0 {
@@ -33,7 +33,7 @@ func (r *Controller) GetInteractionStatisticsByPromotionID(ctx *gin.Context) {
 		return
 	}
 
-	counters, err := r.handler.GetInteractionStatisticsByPromotionID(ctx, id)
+	counters, err := r.handler.GetInteractionStatisticsByPromotionId(ctx, id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
@@ -48,7 +48,7 @@ func (r *Controller) GetInteractionStatisticsByPromotionID(ctx *gin.Context) {
 	return
 }
 
-func (r *Controller) GetInteractionStatisticsByUserID(ctx *gin.Context) {
+func (r *Controller) GetInteractionStatisticsByUserId(ctx *gin.Context) {
 	id := ctx.Param("id")
 
 	if len(strings.TrimSpace(id)) == 0 {
@@ -56,7 +56,7 @@ func (r *Controller) GetInteractionStatisticsByUserID(ctx *gin.Context) {
 		return
 	}
 
-	counters, err := r.handler.GetInteractionStatisticsByUserID(ctx, id)
+	counters, err := r.handler.GetInteractionStatisticsByUserId(ctx, id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
@@ -71,16 +71,16 @@ func (r *Controller) GetInteractionStatisticsByUserID(ctx *gin.Context) {
 	return
 }
 
-func (r *Controller) GetInteractionStatisticsByUserIDWithPromotionID(ctx *gin.Context) {
-	userID, userIDExist := ctx.GetQuery("userID")
-	promotionID, promotionIDExist := ctx.GetQuery("promotionID")
+func (r *Controller) GetInteractionStatisticsByUserIdWithPromotionId(ctx *gin.Context) {
+	userId, userIdExist := ctx.GetQuery("userId")
+	promotionId, promotionIdExist := ctx.GetQuery("promotionId")
 
-	if !userIDExist || !promotionIDExist {
+	if !userIdExist || !promotionIdExist {
 		ctx.Writer.WriteHeader(http.StatusNoContent)
 		return
 	}
 
-	counters, err := r.handler.GetInteractionStatisticsByUserIDWithPromotionID(ctx, userID, promotionID)
+	counters, err := r.handler.GetInteractionStatisticsByUserIdWithPromotionId(ctx, userId, promotionId)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
@@ -95,7 +95,7 @@ func (r *Controller) GetInteractionStatisticsByUserIDWithPromotionID(ctx *gin.Co
 	return
 }
 
-func (r *Controller) GetCommentsByPromotionID(ctx *gin.Context) {
+func (r *Controller) GetCommentsByPromotionId(ctx *gin.Context) {
 	id := ctx.Param("id")
 
 	if len(strings.TrimSpace(id)) == 0 {
@@ -103,7 +103,7 @@ func (r *Controller) GetCommentsByPromotionID(ctx *gin.Context) {
 		return
 	}
 
-	promotion, err := r.handler.GetCommentsByPromotionID(ctx, id)
+	promotion, err := r.handler.GetCommentsByPromotionId(ctx, id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
@@ -221,7 +221,7 @@ func (r *Controller) UpdateUserPicture(ctx *gin.Context) {
 	ctx.Status(http.StatusOK)
 }
 
-func (r *Controller) GetUserByID(ctx *gin.Context) {
+func (r *Controller) GetUserById(ctx *gin.Context) {
 	id := ctx.Param("id")
 
 	if len(strings.TrimSpace(id)) == 0 {
@@ -229,7 +229,7 @@ func (r *Controller) GetUserByID(ctx *gin.Context) {
 		return
 	}
 
-	user, err := r.handler.GetUserByID(ctx, id)
+	user, err := r.handler.GetUserById(ctx, id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
@@ -288,7 +288,7 @@ func (r *Controller) Login(ctx *gin.Context) {
 		return
 	}
 
-	expirationTime := time.Now().Add(1 * time.Hour)
+	expirationTime := time.Now().Add(24 * 7 * time.Hour)
 	claims := &Claims{
 		Username: login.Email,
 		StandardClaims: jwt.StandardClaims{
@@ -401,7 +401,7 @@ func (r *Controller) UpdatePromotionImage(ctx *gin.Context) {
 	ctx.Status(http.StatusOK)
 }
 
-func (r *Controller) GetPromotionByID(ctx *gin.Context) {
+func (r *Controller) GetPromotionById(ctx *gin.Context) {
 	id := ctx.Param("id")
 
 	if len(strings.TrimSpace(id)) == 0 {
@@ -409,7 +409,7 @@ func (r *Controller) GetPromotionByID(ctx *gin.Context) {
 		return
 	}
 
-	promotion, err := r.handler.GetPromotionByID(ctx, id)
+	promotion, err := r.handler.GetPromotionById(ctx, id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
@@ -424,7 +424,7 @@ func (r *Controller) GetPromotionByID(ctx *gin.Context) {
 	return
 }
 
-func (r *Controller) GetFavoritesPromotionsByUserID(ctx *gin.Context) {
+func (r *Controller) GetFavoritesPromotionsByUserId(ctx *gin.Context) {
 	id := ctx.Param("id")
 
 	if len(strings.TrimSpace(id)) == 0 {
@@ -432,7 +432,7 @@ func (r *Controller) GetFavoritesPromotionsByUserID(ctx *gin.Context) {
 		return
 	}
 
-	promotion, err := r.handler.GetFavoritesPromotionsByUserID(ctx, id)
+	promotion, err := r.handler.GetFavoritesPromotionsByUserId(ctx, id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Err": err.Error()})
 		return
@@ -452,7 +452,7 @@ func (r *Controller) GetPromotions(ctx *gin.Context) {
 	categories, _ := ctx.GetQueryArray("category")
 	search, _ := ctx.GetQuery("search")
 	limit, _ := ctx.GetQuery("limit")
-	userID, _ := ctx.GetQuery("userID")
+	userId, _ := ctx.GetQuery("userId")
 	var limitInt int
 	if limit != "" {
 		limitInt, _ = strconv.Atoi(limit)
@@ -461,7 +461,7 @@ func (r *Controller) GetPromotions(ctx *gin.Context) {
 	params := &model.PromotionQuery{
 		Search:     search,
 		Categories: categories,
-		UserID:     userID,
+		UserId:     userId,
 		Limit:      int32(limitInt),
 	}
 	promotions, err := r.handler.GetPromotions(ctx, params)

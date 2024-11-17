@@ -3,7 +3,7 @@ package model
 import "time"
 
 type User struct {
-	ID         string    `json:"id" dynamodbav:"id"` //PK
+	Id         string    `json:"id" dynamodbav:"id"` //PK
 	Email      string    `json:"email" dynamodbav:"email"`
 	Name       string    `json:"name" dynamodbav:"name"`
 	Password   string    `json:"password" dynamodbav:"password"`
@@ -20,8 +20,8 @@ type Login struct {
 }
 
 type UserScore struct {
-	ID        string    `json:"id" dynamodbav:"id"` //PK
-	UserID    string    `json:"userId" dynamodbav:"userId"`
+	Id        string    `json:"id" dynamodbav:"id"` //PK
+	UserId    string    `json:"userId" dynamodbav:"userId"`
 	Points    int       `json:"points" dynamodbav:"points"`
 	CreatedAt time.Time `json:"createdAt" dynamodbav:"createdAt"`
 }

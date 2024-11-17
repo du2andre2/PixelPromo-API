@@ -10,8 +10,8 @@ import (
 	"time"
 )
 
-func (s *service) GetCommentsByPromotionID(ctx context.Context, id string) ([]model.PromotionInteraction, error) {
-	interaction, err := s.rp.GetInteractionsByTypeWithPromotionID(ctx, model.Comment, id)
+func (s *service) GetCommentsByPromotionId(ctx context.Context, id string) ([]model.PromotionInteraction, error) {
+	interaction, err := s.rp.GetInteractionsByTypeWithPromotionId(ctx, model.Comment, id)
 	if err != nil {
 		s.log.Error(err.Error())
 		return nil, err
@@ -20,8 +20,8 @@ func (s *service) GetCommentsByPromotionID(ctx context.Context, id string) ([]mo
 	return interaction, nil
 }
 
-func (s *service) GetInteractionStatisticsByPromotionID(ctx context.Context, id string) (map[string]int, error) {
-	interactions, err := s.rp.GetInteractionsByPromotionID(ctx, id)
+func (s *service) GetInteractionStatisticsByPromotionId(ctx context.Context, id string) (map[string]int, error) {
+	interactions, err := s.rp.GetInteractionsByPromotionId(ctx, id)
 	if err != nil {
 		s.log.Error(err.Error())
 		return nil, err
@@ -39,8 +39,8 @@ func (s *service) GetInteractionStatisticsByPromotionID(ctx context.Context, id 
 	return counters, nil
 }
 
-func (s *service) GetInteractionStatisticsByUserID(ctx context.Context, id string) (map[string]int, error) {
-	interactions, err := s.rp.GetInteractionsByUserID(ctx, id)
+func (s *service) GetInteractionStatisticsByUserId(ctx context.Context, id string) (map[string]int, error) {
+	interactions, err := s.rp.GetInteractionsByUserId(ctx, id)
 	if err != nil {
 		s.log.Error(err.Error())
 		return nil, err
@@ -59,8 +59,8 @@ func (s *service) GetInteractionStatisticsByUserID(ctx context.Context, id strin
 	return counters, nil
 }
 
-func (s *service) GetInteractionStatisticsByUserIDWithPromotionID(ctx context.Context, userID string, promotionID string) (map[string]bool, error) {
-	interactions, err := s.rp.GetInteractionsByUserIDWithPromotionID(ctx, userID, promotionID)
+func (s *service) GetInteractionStatisticsByUserIdWithPromotionId(ctx context.Context, userId string, promotionId string) (map[string]bool, error) {
+	interactions, err := s.rp.GetInteractionsByUserIdWithPromotionId(ctx, userId, promotionId)
 	if err != nil {
 		s.log.Error(err.Error())
 		return nil, err
@@ -79,7 +79,7 @@ func (s *service) GetInteractionStatisticsByUserIDWithPromotionID(ctx context.Co
 
 func (s *service) CreateInteraction(ctx context.Context, newInteraction *model.PromotionInteraction) error {
 
-	promotion, err := s.rp.GetPromotionByID(ctx, newInteraction.PromotionID)
+	promotion, err := s.rp.GetPromotionById(ctx, newInteraction.PromotionId)
 	if err != nil {
 		s.log.Error(err.Error())
 		return err
@@ -88,12 +88,12 @@ func (s *service) CreateInteraction(ctx context.Context, newInteraction *model.P
 		return errors.New("promotion not found")
 	}
 
-	newInteraction.OwnerUserID = promotion.UserID
+	newInteraction.OwnerUserId = promotion.UserId
 	newInteraction.CreatedAt = time.Now()
-	newInteraction.ID = fmt.Sprintf("%s#%s#%s#%s", newInteraction.UserID, newInteraction.OwnerUserID, newInteraction.PromotionID, newInteraction.InteractionType.String())
+	newInteraction.Id = fmt.Sprintf("%s#%s#%s#%s", newInteraction.UserId, newInteraction.OwnerUserId, newInteraction.PromotionId, newInteraction.InteractionType.String())
 
 	if newInteraction.InteractionType == model.Create || newInteraction.InteractionType == model.Comment {
-		newInteraction.ID = fmt.Sprintf("%s#%s", newInteraction.ID, newInteraction.CreatedAt.String())
+		newInteraction.Id = fmt.Sprintf("%s#%s", newInteraction.Id, newInteraction.CreatedAt.String())
 	}
 
 	err = s.validInteraction(newInteraction)
@@ -102,7 +102,7 @@ func (s *service) CreateInteraction(ctx context.Context, newInteraction *model.P
 		return err
 	}
 
-	ownerUser, err := s.rp.GetUserByID(ctx, newInteraction.OwnerUserID)
+	ownerUser, err := s.rp.GetUserById(ctx, newInteraction.OwnerUserId)
 	if err != nil {
 		s.log.Error(err.Error())
 		return err
@@ -117,13 +117,13 @@ func (s *service) CreateInteraction(ctx context.Context, newInteraction *model.P
 		return err
 	}
 
-	interaction, err := s.rp.GetInteractionByID(ctx, newInteraction.ID)
+	interaction, err := s.rp.GetInteractionById(ctx, newInteraction.Id)
 	if err != nil {
 		s.log.Error(err.Error())
 		return err
 	}
 
-	if interaction != nil && interaction.ID == newInteraction.ID {
+	if interaction != nil && interaction.Id == newInteraction.Id {
 
 		score.Points = score.Points * -1
 
@@ -149,7 +149,7 @@ func (s *service) CreateInteraction(ctx context.Context, newInteraction *model.P
 			return err
 		}
 
-		err = s.rp.DeleteInteraction(ctx, newInteraction.ID)
+		err = s.rp.DeleteInteraction(ctx, newInteraction.Id)
 		if err != nil {
 			s.log.Error(err.Error())
 			return err
@@ -190,15 +190,15 @@ func (s *service) validInteraction(interaction *model.PromotionInteraction) erro
 		return errors.New("interaction is nil")
 	}
 
-	if len(strings.TrimSpace(interaction.UserID)) == 0 {
+	if len(strings.TrimSpace(interaction.UserId)) == 0 {
 		return errors.New("userId is empty")
 	}
 
-	if len(strings.TrimSpace(interaction.OwnerUserID)) == 0 {
+	if len(strings.TrimSpace(interaction.OwnerUserId)) == 0 {
 		return errors.New("ownerUserId is empty")
 	}
 
-	if len(strings.TrimSpace(interaction.PromotionID)) == 0 {
+	if len(strings.TrimSpace(interaction.PromotionId)) == 0 {
 		return errors.New("promotionId is empty")
 	}
 
@@ -223,8 +223,8 @@ func (s *service) CreateUserScoreByInteraction(interaction *model.PromotionInter
 	var score model.UserScore
 
 	score.CreatedAt = time.Now()
-	score.ID = fmt.Sprintf("%d", score.CreatedAt.UnixNano())
-	score.UserID = interaction.OwnerUserID
+	score.Id = fmt.Sprintf("%d", score.CreatedAt.UnixNano())
+	score.UserId = interaction.OwnerUserId
 
 	points, err := s.getPointsByInteractionType(interaction.InteractionType)
 	if err != nil {
@@ -261,7 +261,7 @@ func (s *service) editUserStatisticByScore(ctx context.Context, user *model.User
 
 func (s *service) calculateElo(ctx context.Context, user *model.User, newPoints int) (string, error) {
 	initDate := time.Now().AddDate(0, 0, -s.cfg.Viper.GetInt("service.score.elo.timeRangeInDays"))
-	scoreList, err := s.rp.GetAllUserScoreByTimeWithUserId(ctx, user.ID, initDate)
+	scoreList, err := s.rp.GetAllUserScoreByTimeWithUserId(ctx, user.Id, initDate)
 	if err != nil {
 		s.log.Error(err.Error())
 		return "", err
@@ -292,9 +292,10 @@ func pointsRequiredForLevel(level int, minimalPointsLevel int, growthRate float6
 	return int(float64(minimalPointsLevel) * math.Pow(growthRate, float64(level-1)))
 }
 
-func calculateLevel(user *model.User, points int, minimalPointsLevel int, growthRate float64) int {
+func calculateLevel(user *model.User, newPoints int, minimalPointsLevel int, growthRate float64) int {
 
 	currentLevel := user.Level
+	points := user.TotalScore + newPoints
 	for points >= pointsRequiredForLevel(currentLevel, minimalPointsLevel, growthRate) {
 		points -= pointsRequiredForLevel(currentLevel, minimalPointsLevel, growthRate)
 		currentLevel++

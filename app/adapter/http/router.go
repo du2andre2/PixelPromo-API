@@ -41,9 +41,9 @@ func (r *router) Run() {
 func (r *router) setup(gin *gin.Engine) {
 
 	gin.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "http://127.0.0.1:5173/"}, // Porta do frontend
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Content-Type", "Authorization"},
+		AllowOrigins:     []string{"*"}, // Porta do frontend
+		AllowMethods:     []string{"*"},
+		AllowHeaders:     []string{"*"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
@@ -52,41 +52,41 @@ func (r *router) setup(gin *gin.Engine) {
 	gin.POST("/users", r.controller.CreateUser)
 
 	userGroup := gin.Group("/users")
-	//userGroup.Use(authMiddleware())
+	userGroup.Use(authMiddleware())
 	{
 		userGroup.POST("/picture/:id", r.controller.UpdateUserPicture)
 		userGroup.PATCH("", r.controller.UpdateUser)
 		userGroup.DELETE(":id", r.controller.DeleteUser)
-		userGroup.GET(":id", r.controller.GetUserByID)
+		userGroup.GET(":id", r.controller.GetUserById)
 		userGroup.GET("/rank", r.controller.GetUserRank)
 	}
 
 	promotionGroup := gin.Group("/promotions")
-	//promotionGroup.Use(authMiddleware())
+	promotionGroup.Use(authMiddleware())
 	{
 		promotionGroup.POST("", r.controller.CreatePromotion)
 		promotionGroup.DELETE(":id", r.controller.DeletePromotion)
 		promotionGroup.PATCH("", r.controller.UpdatePromotion)
 		promotionGroup.POST("/image/:id", r.controller.UpdatePromotionImage)
 		promotionGroup.GET("", r.controller.GetPromotions) // queryParams: []category, search
-		promotionGroup.GET(":id", r.controller.GetPromotionByID)
-		promotionGroup.GET("/favorites/:id", r.controller.GetFavoritesPromotionsByUserID)
+		promotionGroup.GET(":id", r.controller.GetPromotionById)
+		promotionGroup.GET("/favorites/:id", r.controller.GetFavoritesPromotionsByUserId)
 	}
 
 	categoryGroup := gin.Group("/categories")
-	//categoryGroup.Use(authMiddleware())
+	categoryGroup.Use(authMiddleware())
 	{
 		categoryGroup.GET("", r.controller.GetCategories)
 	}
 
 	interactionGroup := gin.Group("/interactions")
-	//interactionGroup.Use(authMiddleware())
+	interactionGroup.Use(authMiddleware())
 	{
 		interactionGroup.POST("", r.controller.CreateInteraction)
-		interactionGroup.GET("/comments/:id", r.controller.GetCommentsByPromotionID)
-		interactionGroup.GET("/statistics/:id", r.controller.GetInteractionStatisticsByPromotionID)
-		interactionGroup.GET("/user-statistics/:id", r.controller.GetInteractionStatisticsByUserID)
-		interactionGroup.GET("/promotion-user-statistics", r.controller.GetInteractionStatisticsByUserIDWithPromotionID)
+		interactionGroup.GET("/comments/:id", r.controller.GetCommentsByPromotionId)
+		interactionGroup.GET("/statistics/:id", r.controller.GetInteractionStatisticsByPromotionId)
+		interactionGroup.GET("/user-statistics/:id", r.controller.GetInteractionStatisticsByUserId)
+		interactionGroup.GET("/promotion-user-statistics", r.controller.GetInteractionStatisticsByUserIdWithPromotionId)
 	}
 
 	return

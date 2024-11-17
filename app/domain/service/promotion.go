@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"pixelPromo/domain/model"
 	"strings"
 	"time"
@@ -17,8 +18,10 @@ func (s *service) CreatePromotion(ctx context.Context, promotion *model.Promotio
 		return err
 	}
 
+	promotion.DiscountBadge = math.Round(((promotion.OriginalPrice - promotion.DiscountedPrice) / promotion.OriginalPrice) * 100)
+
 	promotion.CreatedAt = time.Now()
-	promotion.ID = fmt.Sprintf("%d", promotion.CreatedAt.UnixNano())
+	promotion.Id = fmt.Sprintf("%d", promotion.CreatedAt.UnixNano())
 
 	if err = s.rp.CreateOrUpdatePromotion(ctx, promotion); err != nil {
 		s.log.Error(err.Error())
@@ -26,10 +29,10 @@ func (s *service) CreatePromotion(ctx context.Context, promotion *model.Promotio
 	}
 
 	interaction := model.PromotionInteraction{
-		ID:              promotion.ID,
-		PromotionID:     promotion.ID,
-		OwnerUserID:     promotion.UserID,
-		UserID:          promotion.UserID,
+		Id:              promotion.Id,
+		PromotionId:     promotion.Id,
+		OwnerUserId:     promotion.UserId,
+		UserId:          promotion.UserId,
 		InteractionType: model.Create,
 		CreatedAt:       promotion.CreatedAt,
 	}
@@ -43,9 +46,9 @@ func (s *service) CreatePromotion(ctx context.Context, promotion *model.Promotio
 	return nil
 }
 
-func (s *service) DeletePromotion(ctx context.Context, promotionID string) error {
+func (s *service) DeletePromotion(ctx context.Context, promotionId string) error {
 
-	if err := s.rp.DeletePromotion(ctx, promotionID); err != nil {
+	if err := s.rp.DeletePromotion(ctx, promotionId); err != nil {
 		s.log.Error(err.Error())
 		return err
 	}
@@ -60,13 +63,13 @@ func (s *service) UpdatePromotion(ctx context.Context, newPromotion *model.Promo
 		return err
 	}
 
-	if newPromotion.ID == "" {
+	if newPromotion.Id == "" {
 		err = errors.New("promotion id is empty")
 		s.log.Error(err.Error())
 		return err
 	}
 
-	promotion, err := s.rp.GetPromotionByID(ctx, newPromotion.ID)
+	promotion, err := s.rp.GetPromotionById(ctx, newPromotion.Id)
 	if err != nil {
 		s.log.Error(err.Error())
 		return err
@@ -89,7 +92,7 @@ func (s *service) UpdatePromotion(ctx context.Context, newPromotion *model.Promo
 
 func (s *service) UpdatePromotionImage(ctx context.Context, id string, image io.Reader) error {
 
-	promotion, err := s.rp.GetPromotionByID(ctx, id)
+	promotion, err := s.rp.GetPromotionById(ctx, id)
 	if err != nil {
 		s.log.Error(err.Error())
 		return err
@@ -118,8 +121,8 @@ func (s *service) UpdatePromotionImage(ctx context.Context, id string, image io.
 	return nil
 }
 
-func (s *service) GetPromotionByID(ctx context.Context, id string) (*model.Promotion, error) {
-	promotion, err := s.rp.GetPromotionByID(ctx, id)
+func (s *service) GetPromotionById(ctx context.Context, id string) (*model.Promotion, error) {
+	promotion, err := s.rp.GetPromotionById(ctx, id)
 	if err != nil {
 		s.log.Error(err.Error())
 		return nil, err
@@ -138,8 +141,8 @@ func (s *service) GetPromotions(ctx context.Context, params *model.PromotionQuer
 	return promotion, nil
 }
 
-func (s *service) GetFavoritesPromotionsByUserID(ctx context.Context, userID string) ([]model.Promotion, error) {
-	interactions, err := s.rp.GetInteractionsByTypeWithUserID(ctx, model.Favorite, userID)
+func (s *service) GetFavoritesPromotionsByUserId(ctx context.Context, userId string) ([]model.Promotion, error) {
+	interactions, err := s.rp.GetInteractionsByTypeWithUserId(ctx, model.Favorite, userId)
 	if err != nil {
 		s.log.Error(err.Error())
 		return []model.Promotion{}, err
@@ -147,7 +150,7 @@ func (s *service) GetFavoritesPromotionsByUserID(ctx context.Context, userID str
 
 	promotions := make([]model.Promotion, 0)
 	for _, interaction := range interactions {
-		promotion, err := s.rp.GetPromotionByID(ctx, interaction.PromotionID)
+		promotion, err := s.rp.GetPromotionById(ctx, interaction.PromotionId)
 		if err != nil {
 			s.log.Error(err.Error())
 			return []model.Promotion{}, err
@@ -188,14 +191,11 @@ func (s *service) validPromotion(ctx context.Context, promotion *model.Promotion
 	if len(strings.TrimSpace(promotion.Link)) == 0 {
 		return errors.New("link is empty")
 	}
-	if len(strings.TrimSpace(promotion.Description)) == 0 {
-		return errors.New("description is empty")
-	}
 	if len(strings.TrimSpace(promotion.Title)) == 0 {
 		return errors.New("title is empty")
 	}
-	if len(strings.TrimSpace(promotion.UserID)) == 0 {
-		return errors.New("userID is empty")
+	if len(strings.TrimSpace(promotion.UserId)) == 0 {
+		return errors.New("userId is empty")
 	}
 
 	if len(promotion.Categories) > 0 {
@@ -206,7 +206,7 @@ func (s *service) validPromotion(ctx context.Context, promotion *model.Promotion
 		}
 	}
 
-	user, err := s.rp.GetUserByID(ctx, promotion.UserID)
+	user, err := s.rp.GetUserById(ctx, promotion.UserId)
 	if err != nil {
 		return err
 	}

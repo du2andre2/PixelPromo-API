@@ -1,16 +1,16 @@
 meta {
-  name: GetInteractionStatisticsByUserIDWithPromotionID
+  name: GetInteractionStatisticsByUserIdWithPromotionId
   type: http
   seq: 5
 }
 
 get {
-  url: {{api-url}}/interactions/promotion-user-statistics?userID=1&promotionID=3
+  url: {{api-url}}/interactions/promotion-user-statistics?userId=1&promotionId=3
   body: none
   auth: none
 }
 
 params:query {
-  userID: 1
-  promotionID: 3
+  userId: 1
+  promotionId: 3
 }

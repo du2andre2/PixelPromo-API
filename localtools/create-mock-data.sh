@@ -1,323 +1,103 @@
+#!/bin/bash
+
 echo "Creating mock data..."
 
-aws dynamodb put-item \
-    --table-name pp-category-catalog \
-    --item \
-        '{"name": {"S": "rpg"}}'\
-    --endpoint-url http://localhost:4566 > /dev/null
+# Configurações
+DYNAMODB_ENDPOINT="http://localhost:4566"
+S3_BUCKET_USER="s3://pp-user-pictures"
+S3_BUCKET_PROMOTION="s3://pp-promotion-images"
+CATEGORY_COUNT=10
+USER_COUNT=10
+PROMOTION_COUNT=30
+IMAGES_PATH="./imgs"
 
-aws dynamodb put-item \
-    --table-name pp-category-catalog \
-    --item \
-        '{"name": {"S": "fps"}}'\
-    --endpoint-url http://localhost:4566 > /dev/null
+# Criar categorias
+echo "Creating categories..."
+for i in $(seq 1 $CATEGORY_COUNT); do
+    CATEGORY_NAME="categoria_$i"
+    aws dynamodb put-item \
+        --table-name pp-category-catalog \
+        --item "{\"name\": {\"S\": \"$CATEGORY_NAME\"}}" \
+        --endpoint-url $DYNAMODB_ENDPOINT > /dev/null
+done
 
-aws dynamodb put-item \
-    --table-name pp-category-catalog \
-    --item \
-        '{"name": {"S": "estrategia"}}'\
-    --endpoint-url http://localhost:4566 > /dev/null
+# Enviar imagens para S3
+echo "Uploading images to S3..."
+aws s3 cp $IMAGES_PATH $S3_BUCKET_USER --recursive --endpoint-url $DYNAMODB_ENDPOINT > /dev/null
+aws s3 cp $IMAGES_PATH $S3_BUCKET_PROMOTION --recursive --endpoint-url $DYNAMODB_ENDPOINT > /dev/null
 
-aws dynamodb put-item \
-    --table-name pp-category-catalog \
-    --item \
-        '{"name": {"S": "indie"}}'\
-    --endpoint-url http://localhost:4566 > /dev/null
+# Criar usuários
+echo "Creating users..."
+for i in $(seq 1 $USER_COUNT); do
+    USER_EMAIL="user$i@gmail.com"
+    USER_NAME="user_$i"
+    USER_PASSWORD="123123"
+    USER_PICTURE="http://localhost:4566/pp-user-pictures/perfil$i.png"
+    CREATED_AT=$(date -Iseconds)
 
-aws dynamodb put-item \
-    --table-name pp-category-catalog \
-    --item \
-        '{"name": {"S": "plataforma"}}'\
-    --endpoint-url http://localhost:4566 > /dev/null
+    aws dynamodb put-item \
+        --table-name pp-user-catalog \
+        --item \
+        "{
+            \"id\": {\"S\":\"$i\"},
+            \"email\": {\"S\":\"$USER_EMAIL\"},
+            \"name\": {\"S\":\"$USER_NAME\"},
+            \"password\": {\"S\":\"$USER_PASSWORD\"},
+            \"pictureUrl\": {\"S\":\"$USER_PICTURE\"},
+            \"createdAt\": {\"S\":\"$CREATED_AT\"}
+        }" \
+        --endpoint-url $DYNAMODB_ENDPOINT > /dev/null
+done
 
+# Criar promoções
+echo "Creating promotions..."
+for i in $(seq 1 $PROMOTION_COUNT); do
+    PROMO_ID=$i
+    USER_ID=$(( (i % USER_COUNT) + 1 ))  # Relacionar promoções com usuários existentes
+    TITLE="Promoção Jogo $PROMO_ID"
+    DESCRIPTION="Descrição da promoção $PROMO_ID"
+    IMAGE_URL="http://localhost:4566/pp-promotion-images/jogo$(( (i % 12) + 1 )).png"
+    LINK="https://example.com/promo_$PROMO_ID"
 
-aws s3 cp ./imgs s3://pp-user-pictures/ --recursive \
-    --endpoint-url http://localhost:4566
+    # Gerar preços em float
+    ORIGINAL_PRICE=$(awk -v min=50 -v range=500 'BEGIN { printf "%.2f", min + rand() * range }')
+    DISCOUNT_PERCENT=$(awk 'BEGIN { printf "%.2f", (10 + rand() * 40) }')  # Desconto de 10% a 50%
+    DISCOUNTED_PRICE=$(awk -v op="$ORIGINAL_PRICE" -v dp="$DISCOUNT_PERCENT" 'BEGIN { printf "%.2f", op * (1 - dp / 100) }')
 
+    # Cálculo do badge de desconto
+    DISCOUNT_BADGE=$(awk -v dp="$DISCOUNT_PERCENT" 'BEGIN { printf "%.0f", dp }')
 
-aws dynamodb put-item \
-    --table-name pp-user-catalog \
-    --item \
-        '{
-            "id": {"S":"1"},
-            "email": {"S":"edu@gmail.com"},
-            "name": {"S":"edu"},
-            "password": {"S":"12345678"},
-            "pictureUrl": {"S":"http://localhost:4566/pp-user-pictures/perfil1.jpg"},
-            "createdAt": {"S":"2024-09-01T12:34:32.5657674-03:00"}
-        }'\
-    --endpoint-url http://localhost:4566 > /dev/null
+    PLATFORM="Steam"
+    CREATED_AT=$(date -Iseconds)
+    CATEGORY_COUNT=$((RANDOM % 3 + 1))
+    CATEGORIES=""
 
-aws dynamodb put-item \
-    --table-name pp-user-catalog \
-    --item \
-        '{
-            "id": {"S":"2"},
-            "email": {"S":"lucas@gmail.com"},
-            "name": {"S":"lucas"},
-            "password": {"S":"12345678"},
-            "pictureUrl": {"S":"http://localhost:4566/pp-user-pictures/perfil2.jpg"},
-            "createdAt": {"S":"2024-09-01T12:34:32.5657674-03:00"}
-        }'\
-    --endpoint-url http://localhost:4566 > /dev/null
+    for j in $(seq 1 $CATEGORY_COUNT); do
+        CATEGORY_INDEX=$(( (i + j) % CATEGORY_COUNT + 1 ))
+        CATEGORIES="${CATEGORIES}{\"S\": \"categoria_$CATEGORY_INDEX\"},"
+    done
 
-aws dynamodb put-item \
-    --table-name pp-user-catalog \
-    --item \
-        '{
-            "id": {"S":"3"},
-            "email": {"S":"joao@gmail.com"},
-            "name": {"S":"joao"},
-            "password": {"S":"12345678"},
-            "pictureUrl": {"S":"http://localhost:4566/pp-user-pictures/perfil3.jpg"},
-            "createdAt": {"S":"2024-09-01T12:34:32.5657674-03:00"}
-        }'\
-    --endpoint-url http://localhost:4566 > /dev/null
+    # Remover vírgula extra
+    CATEGORIES=${CATEGORIES%,}
 
+    aws dynamodb put-item \
+        --table-name pp-promotion-catalog \
+        --item \
+        "{
+            \"id\": {\"S\":\"$PROMO_ID\"},
+            \"userId\": {\"S\":\"$USER_ID\"},
+            \"title\": {\"S\":\"$TITLE\"},
+            \"description\": {\"S\":\"$DESCRIPTION\"},
+            \"categories\": {\"L\": [ $CATEGORIES ]},
+            \"imageUrl\": {\"S\":\"$IMAGE_URL\"},
+            \"link\": {\"S\":\"$LINK\"},
+            \"originalPrice\": {\"N\":\"$ORIGINAL_PRICE\"},
+            \"discountedPrice\": {\"N\":\"$DISCOUNTED_PRICE\"},
+            \"discountBadge\": {\"N\":\"$DISCOUNT_BADGE\"},
+            \"platform\": {\"S\":\"$PLATFORM\"},
+            \"createdAt\": {\"S\":\"$CREATED_AT\"}
+        }" \
+        --endpoint-url $DYNAMODB_ENDPOINT > /dev/null
+done
 
-aws dynamodb put-item \
-    --table-name pp-user-catalog \
-    --item \
-        '{
-            "id": {"S":"4"},
-            "email": {"S":"pedro@gmail.com"},
-            "name": {"S":"pedro"},
-            "password": {"S":"12345678"},
-            "pictureUrl": {"S":"http://localhost:4566/pp-user-pictures/perfil4.jpg"},
-            "createdAt": {"S":"2024-09-01T12:34:32.5657674-03:00"}
-        }'\
-    --endpoint-url http://localhost:4566 > /dev/null
-
-
-aws s3 cp ./imgs s3://pp-promotion-images/ --recursive \
-    --endpoint-url http://localhost:4566
-
-
-aws dynamodb put-item \
-    --table-name pp-promotion-catalog \
-    --item \
-        '{
-            "id": {"S":"1"},
-            "userId": {"S":"1"},
-            "title": {"S":"jogo 1"},
-            "description": {"S":"jogo 1 na promoção"},
-            "categories": {"L": [ {"S": "fps"} , {"S": "rpg"}] },
-            "imageUrl": {"S":"http://localhost:4566/pp-promotion-images/jogo1.jpg"},
-            "link": {"S":"https://www.google.com"},
-            "originalPrice": {"S":"300,00"},
-            "discountedPrice": {"S":"255,00"},
-            "discountBadge": {"S":"15"},
-            "platform": {"S":"Steam"},
-            "createdAt": {"S":"2024-09-01T12:34:32.5657674-03:00"}
-        }'\
-    --endpoint-url http://localhost:4566 > /dev/null
-
-aws dynamodb put-item \
-    --table-name pp-promotion-catalog \
-    --item \
-        '{
-            "id": {"S":"2"},
-            "userId": {"S":"1"},
-            "title": {"S":"jogo 2"},
-            "description": {"S":"jogo 2 na promoção"},
-            "categories": {"L": [ {"S": "estrategia"} , {"S": "indie"}] },
-            "imageUrl": {"S":"http://localhost:4566/pp-promotion-images/jogo2.jpg"},
-            "link": {"S":"https://www.google.com"},
-            "originalPrice": {"S":"100,00"},
-            "discountedPrice": {"S":"91,00"},
-            "discountBadge": {"S":"9"},
-            "platform": {"S":"Steam"},
-            "createdAt": {"S":"2024-09-01T12:34:32.5657674-03:00"}
-        }'\
-    --endpoint-url http://localhost:4566 > /dev/null
-
-aws dynamodb put-item \
-    --table-name pp-promotion-catalog \
-    --item \
-        '{
-            "id": {"S":"3"},
-            "userId": {"S":"1"},
-            "title": {"S":"jogo 3"},
-            "description": {"S":"jogo 3 na promoção"},
-            "categories": {"L": [ {"S": "plataforma"} , {"S": "rpg"}] },
-            "imageUrl": {"S":"http://localhost:4566/pp-promotion-images/jogo3.jpg"},
-            "link": {"S":"https://www.google.com"},
-            "originalPrice": {"S":"100,00"},
-            "discountedPrice": {"S":"86,00"},
-            "discountBadge": {"S":"14"},
-            "platform": {"S":"Steam"},
-            "createdAt": {"S":"2024-09-01T12:34:32.5657674-03:00"}
-        }'\
-    --endpoint-url http://localhost:4566 > /dev/null
-
-aws dynamodb put-item \
-    --table-name pp-promotion-catalog \
-    --item \
-        '{
-            "id": {"S":"4"},
-            "userId": {"S":"2"},
-            "title": {"S":"jogo 4"},
-            "description": {"S":"jogo 4 na promoção"},
-            "categories": {"L": [ {"S": "fps"} , {"S": "rpg"}] },
-            "imageUrl": {"S":"http://localhost:4566/pp-promotion-images/jogo1.jpg"},
-            "link": {"S":"https://www.google.com"},
-            "originalPrice": {"S":"300,00"},
-            "discountedPrice": {"S":"150,00"},
-            "discountBadge": {"S":"50"},
-            "platform": {"S":"Steam"},
-            "createdAt": {"S":"2024-09-01T12:34:32.5657674-03:00"}
-        }'\
-    --endpoint-url http://localhost:4566 > /dev/null
-
-aws dynamodb put-item \
-    --table-name pp-promotion-catalog \
-    --item \
-        '{
-            "id": {"S":"5"},
-            "userId": {"S":"2"},
-            "title": {"S":"jogo 5"},
-            "description": {"S":"jogo 5 na promoção"},
-            "categories": {"L": [ {"S": "estrategia"} , {"S": "indie"}] },
-            "imageUrl": {"S":"http://localhost:4566/pp-promotion-images/jogo2.jpg"},
-            "link": {"S":"https://www.google.com"},
-            "originalPrice": {"S":"300,00"},
-            "discountedPrice": {"S":"200,00"},
-            "discountBadge": {"S":"33"},
-            "platform": {"S":"Steam"},
-            "createdAt": {"S":"2024-09-01T12:34:32.5657674-03:00"}
-        }'\
-    --endpoint-url http://localhost:4566 > /dev/null
-
-aws dynamodb put-item \
-    --table-name pp-promotion-catalog \
-    --item \
-        '{
-            "id": {"S":"6"},
-            "userId": {"S":"2"},
-            "title": {"S":"jogo 6"},
-            "description": {"S":"jogo 6 na promoção"},
-            "categories": {"L": [ {"S": "plataforma"} , {"S": "rpg"}] },
-            "imageUrl": {"S":"http://localhost:4566/pp-promotion-images/jogo3.jpg"},
-            "link": {"S":"https://www.google.com"},
-            "originalPrice": {"S":"100,00"},
-            "discountedPrice": {"S":"75,00"},
-            "discountBadge": {"S":"25"},
-            "platform": {"S":"Steam"},
-            "createdAt": {"S":"2024-09-01T12:34:32.5657674-03:00"}
-        }'\
-    --endpoint-url http://localhost:4566 > /dev/null
-
-aws dynamodb put-item \
-    --table-name pp-promotion-catalog \
-    --item \
-        '{
-            "id": {"S":"7"},
-            "userId": {"S":"3"},
-            "title": {"S":"jogo 7"},
-            "description": {"S":"jogo 7 na promoção"},
-            "categories": {"L": [ {"S": "fps"} , {"S": "rpg"}] },
-            "imageUrl": {"S":"http://localhost:4566/pp-promotion-images/jogo1.jpg"},
-            "link": {"S":"https://www.google.com"},
-            "originalPrice": {"S":"250,00"},
-            "discountedPrice": {"S":"187,5"},
-            "discountBadge": {"S":"25"},
-            "platform": {"S":"Steam"},
-            "createdAt": {"S":"2024-09-01T12:34:32.5657674-03:00"}
-        }'\
-    --endpoint-url http://localhost:4566 > /dev/null
-
-aws dynamodb put-item \
-    --table-name pp-promotion-catalog \
-    --item \
-        '{
-            "id": {"S":"8"},
-            "userId": {"S":"3"},
-            "title": {"S":"jogo 8"},
-            "description": {"S":"jogo 8 na promoção"},
-            "categories": {"L": [ {"S": "estrategia"} , {"S": "indie"}] },
-            "imageUrl": {"S":"http://localhost:4566/pp-promotion-images/jogo2.jpg"},
-            "link": {"S":"https://www.google.com"},
-            "originalPrice": {"S":"100,00"},
-            "discountedPrice": {"S":"50,00"},
-            "discountBadge": {"S":"50,00"},
-            "platform": {"S":"Steam"},
-            "createdAt": {"S":"2024-09-01T12:34:32.5657674-03:00"}
-        }'\
-    --endpoint-url http://localhost:4566 > /dev/null
-
-aws dynamodb put-item \
-    --table-name pp-promotion-catalog \
-    --item \
-        '{
-            "id": {"S":"9"},
-            "userId": {"S":"3"},
-            "title": {"S":"jogo 9"},
-            "description": {"S":"jogo 9 na promoção"},
-            "categories": {"L": [ {"S": "plataforma"} , {"S": "rpg"}] },
-            "imageUrl": {"S":"http://localhost:4566/pp-promotion-images/jogo3.jpg"},
-            "link": {"S":"https://www.google.com"},
-            "originalPrice": {"S":"150,00"},
-            "discountedPrice": {"S":"50,00"},
-            "discountBadge": {"S":"66"},
-            "platform": {"S":"Steam"},
-            "createdAt": {"S":"2024-09-01T12:34:32.5657674-03:00"}
-        }'\
-    --endpoint-url http://localhost:4566 > /dev/null
-
-aws dynamodb put-item \
-    --table-name pp-promotion-catalog \
-    --item \
-        '{
-            "id": {"S":"10"},
-            "userId": {"S":"4"},
-            "title": {"S":"jogo 10"},
-            "description": {"S":"jogo 10 na promoção"},
-            "categories": {"L": [ {"S": "fps"} , {"S": "rpg"}] },
-            "imageUrl": {"S":"http://localhost:4566/pp-promotion-images/jogo1.jpg"},
-            "link": {"S":"https://www.google.com"},
-            "originalPrice": {"S":"150,00"},
-            "discountedPrice": {"S":"100,00"},
-            "discountBadge": {"S":"33"},
-            "platform": {"S":"Steam"},
-            "createdAt": {"S":"2024-09-01T12:34:32.5657674-03:00"}
-        }'\
-    --endpoint-url http://localhost:4566 > /dev/null
-
-aws dynamodb put-item \
-    --table-name pp-promotion-catalog \
-    --item \
-        '{
-            "id": {"S":"11"},
-            "userId": {"S":"4"},
-            "title": {"S":"jogo 11"},
-            "description": {"S":"jogo 11 na promoção"},
-            "categories": {"L": [ {"S": "estrategia"} , {"S": "indie"}] },
-            "imageUrl": {"S":"http://localhost:4566/pp-promotion-images/jogo2.jpg"},
-            "link": {"S":"https://www.google.com"},
-            "originalPrice": {"S":"200,00"},
-            "discountedPrice": {"S":"100,00"},
-            "discountBadge": {"S":"50"},
-            "platform": {"S":"Steam"},
-            "createdAt": {"S":"2024-09-01T12:34:32.5657674-03:00"}
-        }'\
-    --endpoint-url http://localhost:4566 > /dev/null
-
-aws dynamodb put-item \
-    --table-name pp-promotion-catalog \
-    --item \
-        '{
-            "id": {"S":"12"},
-            "userId": {"S":"4"},
-            "title": {"S":"jogo 12"},
-            "description": {"S":"jogo 12 na promoção"},
-            "categories": {"L": [ {"S": "plataforma"} , {"S": "rpg"}] },
-            "imageUrl": {"S":"http://localhost:4566/pp-promotion-images/jogo3.jpg"},
-            "link": {"S":"https://www.google.com"},
-            "originalPrice": {"S":"100,00"},
-            "discountedPrice": {"S":"60,00"},
-            "discountBadge": {"S":"40"},
-            "platform": {"S":"Steam"},
-            "createdAt": {"S":"2024-09-01T12:34:32.5657674-03:00"}
-        }'\
-    --endpoint-url http://localhost:4566 > /dev/null
-
+echo "Mock data creation complete!"

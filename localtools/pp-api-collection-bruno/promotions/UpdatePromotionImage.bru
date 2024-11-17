@@ -6,10 +6,18 @@ meta {
 
 post {
   url: {{api-url}}/promotions/image/:id
-  body: none
+  body: multipartForm
   auth: none
 }
 
 params:path {
   id: 1
+}
+
+headers {
+  Authorization: xxxxxxxxxx
+}
+
+body:multipart-form {
+  image: @file(C:\Users\du2an\OneDrive\Desktop\TCC\PixelPromo-API\localtools\imgs\jogo1.jpg)
 }

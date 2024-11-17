@@ -21,7 +21,7 @@ func (s *service) CreateUser(ctx context.Context, user *model.User) error {
 	}
 
 	user.CreatedAt = time.Now()
-	user.ID = fmt.Sprintf("%d", user.CreatedAt.UnixNano())
+	user.Id = fmt.Sprintf("%d", user.CreatedAt.UnixNano())
 
 	if err = s.rp.CreateOrUpdateUser(ctx, user); err != nil {
 		s.log.Error(err.Error())
@@ -40,7 +40,7 @@ func (s *service) UpdateUser(ctx context.Context, user *model.User) error {
 		return err
 	}
 
-	if user.ID == "" {
+	if user.Id == "" {
 		err = errors.New("user id is empty")
 		s.log.Error(err.Error())
 		return err
@@ -68,7 +68,7 @@ func (s *service) DeleteUser(ctx context.Context, id string) error {
 
 func (s *service) UpdateUserPicture(ctx context.Context, id string, image io.Reader) error {
 
-	user, err := s.rp.GetUserByID(ctx, id)
+	user, err := s.rp.GetUserById(ctx, id)
 	if err != nil {
 		s.log.Error(err.Error())
 		return err
@@ -112,8 +112,8 @@ func (s *service) Login(ctx context.Context, login *model.Login) (*model.User, e
 	return user, nil
 }
 
-func (s *service) GetUserByID(ctx context.Context, id string) (*model.User, error) {
-	user, err := s.rp.GetUserByID(ctx, id)
+func (s *service) GetUserById(ctx context.Context, id string) (*model.User, error) {
+	user, err := s.rp.GetUserById(ctx, id)
 	if err != nil {
 		s.log.Error(err.Error())
 		return nil, err
@@ -133,7 +133,7 @@ func (s *service) GetUserRank(ctx context.Context, limit int) ([]model.User, err
 
 	usersRank := make(map[string]int)
 	for _, score := range scoreList {
-		usersRank[score.UserID] += score.Points
+		usersRank[score.UserId] += score.Points
 	}
 
 	keys := make([]string, 0, len(usersRank))
@@ -150,7 +150,7 @@ func (s *service) GetUserRank(ctx context.Context, limit int) ([]model.User, err
 		if i == limit {
 			break
 		}
-		user, err := s.rp.GetUserByID(ctx, k)
+		user, err := s.rp.GetUserById(ctx, k)
 		if err != nil {
 			s.log.Error(err.Error())
 			return nil, err
