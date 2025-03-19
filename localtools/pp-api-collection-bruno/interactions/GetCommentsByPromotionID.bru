@@ -7,9 +7,13 @@ meta {
 get {
   url: {{api-url}}/interactions/comments/:id
   body: none
-  auth: none
+  auth: bearer
 }
 
 params:path {
   id: 1731792687368031500
+}
+
+auth:bearer {
+  token: {{token}}
 }

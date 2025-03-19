@@ -7,7 +7,7 @@ meta {
 post {
   url: {{api-url}}/promotions/image/:id
   body: multipartForm
-  auth: none
+  auth: bearer
 }
 
 params:path {
@@ -16,6 +16,10 @@ params:path {
 
 headers {
   Authorization: xxxxxxxxxx
+}
+
+auth:bearer {
+  token: {{token}}
 }
 
 body:multipart-form {

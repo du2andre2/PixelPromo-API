@@ -7,7 +7,11 @@ meta {
 patch {
   url: {{api-url}}/promotions/
   body: json
-  auth: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
 }
 
 body:json {

@@ -7,11 +7,15 @@ meta {
 post {
   url: {{api-url}}/promotions/
   body: json
-  auth: none
+  auth: bearer
 }
 
 headers {
   Authorization: xxxxxxxxxxxxx
+}
+
+auth:bearer {
+  token: {{token}}
 }
 
 body:json {

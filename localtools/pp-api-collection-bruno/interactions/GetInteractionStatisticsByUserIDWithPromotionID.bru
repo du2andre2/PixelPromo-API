@@ -7,10 +7,14 @@ meta {
 get {
   url: {{api-url}}/interactions/promotion-user-statistics?userId=1&promotionId=3
   body: none
-  auth: none
+  auth: bearer
 }
 
 params:query {
   userId: 1
   promotionId: 3
+}
+
+auth:bearer {
+  token: {{token}}
 }

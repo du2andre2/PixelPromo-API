@@ -7,11 +7,15 @@ meta {
 patch {
   url: {{api-url}}/users
   body: json
-  auth: none
+  auth: bearer
 }
 
 headers {
   Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImVkdUBnbWFpbC5jb20iLCJleHAiOjE3MzI0Njk3NDd9.uxFwpsdM80TousNsIUinp8pg656oMXp7OAg33whPOJI
+}
+
+auth:bearer {
+  token: {{token}}
 }
 
 body:json {

@@ -7,11 +7,15 @@ meta {
 post {
   url: {{api-url}}/users/picture/:id
   body: multipartForm
-  auth: none
+  auth: bearer
 }
 
 params:path {
   id: 1
+}
+
+auth:bearer {
+  token: {{token}}
 }
 
 body:multipart-form {
