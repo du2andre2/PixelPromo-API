@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"github.com/spf13/viper"
+	"strings"
 )
 
 type Config struct {
@@ -12,6 +13,7 @@ type Config struct {
 
 func NewConfig() *Config {
 
+	viper.AutomaticEnv()
 	viper.SetConfigName("env")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
@@ -33,8 +35,8 @@ func getEnv(v *viper.Viper) Env {
 	env := v.GetString("service-config.env")
 
 	switch env {
-	case string(Dev):
-		return Dev
+	case string(AWS):
+		return AWS
 	case string(Local):
 		return Local
 	default:
@@ -46,6 +48,6 @@ func getEnv(v *viper.Viper) Env {
 type Env string
 
 const (
-	Dev   Env = "dev"
+	AWS   Env = "aws"
 	Local Env = "local"
 )
