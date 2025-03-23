@@ -84,11 +84,11 @@ aws dynamodb create-table \
 echo "Criando Buckets..."
 
 aws s3api create-bucket \
-    --bucket pp-user-pictures \
+    --bucket pp-user-imgs \
     --endpoint-url http://localhost:4566 > /dev/null
 
 aws s3api create-bucket \
-    --bucket pp-promotion-images \
+    --bucket pp-promotion-imgsimgs \
     --endpoint-url http://localhost:4566 > /dev/null
 
 echo "Configuração finalizada com sucesso!"

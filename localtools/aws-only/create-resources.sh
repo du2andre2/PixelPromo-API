@@ -16,7 +16,7 @@ aws dynamodb create-table \
         "KeySchema": [{"AttributeName": "createdAt", "KeyType": "HASH"}],
         "Projection": {"ProjectionType": "ALL"}
     }]' \
-    --profile=admin --region=us-east-1 > /dev/null
+    --profile=eduardo-admin --region=us-east-1 > /dev/null
 
 # Criando a tabela pp-promotion-catalog
 aws dynamodb create-table \
@@ -32,7 +32,7 @@ aws dynamodb create-table \
         "KeySchema": [{"AttributeName": "createdAt", "KeyType": "HASH"}],
         "Projection": {"ProjectionType": "ALL"}
     }]' \
-    --profile=admin --region=us-east-1 > /dev/null
+    --profile=eduardo-admin --region=us-east-1 > /dev/null
 
 # Criando a tabela pp-promotion-interaction
 aws dynamodb create-table \
@@ -48,7 +48,7 @@ aws dynamodb create-table \
         "KeySchema": [{"AttributeName": "createdAt", "KeyType": "HASH"}],
         "Projection": {"ProjectionType": "ALL"}
     }]' \
-    --profile=admin --region=us-east-1 > /dev/null
+    --profile=eduardo-admin --region=us-east-1 > /dev/null
 
 # Criando a tabela pp-category-catalog
 aws dynamodb create-table \
@@ -58,7 +58,7 @@ aws dynamodb create-table \
     --key-schema \
         AttributeName=name,KeyType=HASH \
     --billing-mode PAY_PER_REQUEST \
-    --profile=admin --region=us-east-1 > /dev/null
+    --profile=eduardo-admin --region=us-east-1 > /dev/null
 
 # Criando a tabela pp-user-score
 aws dynamodb create-table \
@@ -74,16 +74,16 @@ aws dynamodb create-table \
         "KeySchema": [{"AttributeName": "createdAt", "KeyType": "HASH"}],
         "Projection": {"ProjectionType": "ALL"}
     }]' \
-    --profile=admin --region=us-east-1 > /dev/null
+    --profile=eduardo-admin --region=us-east-1 > /dev/null
 
 echo "Criando Buckets..."
 
 aws s3api create-bucket \
-    --bucket pp-user-pictures \
-    --profile=admin --region=us-east-1 > /dev/null
+    --bucket pp-user-imgs \
+    --profile=eduardo-admin --region=us-east-1 > /dev/null
 
 aws s3api create-bucket \
-    --bucket pp-promotion-images \
-    --profile=admin --region=us-east-1 > /dev/null
+    --bucket pp-promotion-imgs \
+    --profile=eduardo-admin --region=us-east-1 > /dev/null
 
 echo "Configuração finalizada com sucesso!"

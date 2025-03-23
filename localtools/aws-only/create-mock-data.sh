@@ -6,12 +6,13 @@ echo "Creating mock data on AWS..."
 
 # Configurações
 AWS_REGION="us-east-1"  # Defina a região da AWS
-S3_BUCKET_USER="s3://pp-user-pictures"
-S3_BUCKET_PROMOTION="s3://pp-promotion-images"
+S3_BUCKET_USER="s3://pp-user-imgs"
+S3_BUCKET_PROMOTION="s3://pp-promotion-imgs"
 CATEGORY_COUNT=10
 USER_COUNT=10
 PROMOTION_COUNT=30
-IMAGES_PATH="../imgs"
+IMAGES_PATH="../imgs/promotions"
+PICTURES_PATH="../imgs/users"
 
 # Criar categorias no DynamoDB
 echo "Creating categories..."
@@ -19,14 +20,14 @@ for i in $(seq 1 $CATEGORY_COUNT); do
     CATEGORY_NAME="categoria_$i"
     aws dynamodb put-item \
         --table-name pp-category-catalog \
-        --profile=admin --region=$AWS_REGION \
+        --profile=api --region=$AWS_REGION \
         --item "{\"name\": {\"S\": \"$CATEGORY_NAME\"}}" > /dev/null
 done
 
 # Enviar imagens para S3
 echo "Uploading images to S3..."
-aws s3 cp "$IMAGES_PATH" "$S3_BUCKET_USER" --recursive --profile=admin --region=$AWS_REGION > /dev/null
-aws s3 cp "$IMAGES_PATH" "$S3_BUCKET_PROMOTION" --recursive --profile=admin --region=$AWS_REGION > /dev/null
+aws s3 cp "$PICTURES_PATH" "$S3_BUCKET_USER" --recursive --profile=api --region=$AWS_REGION > /dev/null
+aws s3 cp "$IMAGES_PATH" "$S3_BUCKET_PROMOTION" --recursive --profile=api --region=$AWS_REGION > /dev/null
 
 # Criar usuários no DynamoDB
 echo "Creating users..."
@@ -40,7 +41,7 @@ for i in $(seq 1 $USER_COUNT); do
 
     aws dynamodb put-item \
         --table-name pp-user-catalog \
-        --profile=admin --region=$AWS_REGION \
+        --profile=api --region=$AWS_REGION \
         --item \
         "{
             \"id\": {\"S\":\"$USER_ID\"},
@@ -57,7 +58,7 @@ echo "Creating promotions..."
 for i in $(seq 1 $PROMOTION_COUNT); do
     PROMO_ID=$i  # Gera um ID único para cada promoção
     USER_INDEX=$(( (i % USER_COUNT) + 1 ))
-    USER_ID=$(aws dynamodb scan --table-name pp-user-catalog --profile=admin --region=$AWS_REGION --query "Items[$((USER_INDEX-1))].id.S" --output text)
+    USER_ID=$(aws dynamodb scan --table-name pp-user-catalog --profile=api --region=$AWS_REGION --query "Items[$((USER_INDEX-1))].id.S" --output text)
 
     TITLE="Promoção Jogo $i"
     DESCRIPTION="Descrição da promoção $i"
@@ -85,7 +86,7 @@ for i in $(seq 1 $PROMOTION_COUNT); do
 
     aws dynamodb put-item \
         --table-name pp-promotion-catalog \
-        --profile=admin --region=$AWS_REGION \
+        --profile=api --region=$AWS_REGION \
         --item \
         "{
             \"id\": {\"S\":\"$PROMO_ID\"},
