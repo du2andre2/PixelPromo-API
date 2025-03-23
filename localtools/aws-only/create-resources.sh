@@ -1,10 +1,5 @@
 #!/bin/bash
 
-docker-compose down
-docker-compose up -d
-
-sleep 5
-
 echo "Criando Tabelas..."
 
 # Criando a tabela pp-user-catalog
@@ -21,7 +16,7 @@ aws dynamodb create-table \
         "KeySchema": [{"AttributeName": "createdAt", "KeyType": "HASH"}],
         "Projection": {"ProjectionType": "ALL"}
     }]' \
-    --endpoint-url http://localhost:4566 > /dev/null
+    --profile=admin --region=us-east-1 > /dev/null
 
 # Criando a tabela pp-promotion-catalog
 aws dynamodb create-table \
@@ -37,7 +32,7 @@ aws dynamodb create-table \
         "KeySchema": [{"AttributeName": "createdAt", "KeyType": "HASH"}],
         "Projection": {"ProjectionType": "ALL"}
     }]' \
-    --endpoint-url http://localhost:4566 > /dev/null
+    --profile=admin --region=us-east-1 > /dev/null
 
 # Criando a tabela pp-promotion-interaction
 aws dynamodb create-table \
@@ -53,7 +48,7 @@ aws dynamodb create-table \
         "KeySchema": [{"AttributeName": "createdAt", "KeyType": "HASH"}],
         "Projection": {"ProjectionType": "ALL"}
     }]' \
-    --endpoint-url http://localhost:4566 > /dev/null
+    --profile=admin --region=us-east-1 > /dev/null
 
 # Criando a tabela pp-category-catalog
 aws dynamodb create-table \
@@ -63,7 +58,7 @@ aws dynamodb create-table \
     --key-schema \
         AttributeName=name,KeyType=HASH \
     --billing-mode PAY_PER_REQUEST \
-    --endpoint-url http://localhost:4566 > /dev/null
+    --profile=admin --region=us-east-1 > /dev/null
 
 # Criando a tabela pp-user-score
 aws dynamodb create-table \
@@ -79,16 +74,16 @@ aws dynamodb create-table \
         "KeySchema": [{"AttributeName": "createdAt", "KeyType": "HASH"}],
         "Projection": {"ProjectionType": "ALL"}
     }]' \
-    --endpoint-url http://localhost:4566 > /dev/null
+    --profile=admin --region=us-east-1 > /dev/null
 
 echo "Criando Buckets..."
 
 aws s3api create-bucket \
     --bucket pp-user-pictures \
-    --endpoint-url http://localhost:4566 > /dev/null
+    --profile=admin --region=us-east-1 > /dev/null
 
 aws s3api create-bucket \
     --bucket pp-promotion-images \
-    --endpoint-url http://localhost:4566 > /dev/null
+    --profile=admin --region=us-east-1 > /dev/null
 
 echo "Configuração finalizada com sucesso!"
