@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"github.com/spf13/viper"
+	"os"
 	"strings"
 )
 
@@ -13,15 +14,20 @@ type Config struct {
 
 func NewConfig() *Config {
 
-	viper.AutomaticEnv()
-	viper.SetConfigName("env")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath(".")
-
+	setupViper("./env.yml")
 	err := viper.ReadInConfig()
 	if err != nil {
 		panic(err)
 	}
+
+	if _, err := os.Stat("./cm.yml"); err == nil {
+		setupViper("./cm.yml")
+		err = viper.MergeInConfig()
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	getViper := viper.GetViper()
 	env := getEnv(getViper)
 
@@ -29,6 +35,12 @@ func NewConfig() *Config {
 		Viper: getViper,
 		Env:   env,
 	}
+}
+
+func setupViper(file string) {
+	viper.SetConfigFile(file)
+	viper.AutomaticEnv()
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 }
 
 func getEnv(v *viper.Viper) Env {
