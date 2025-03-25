@@ -7,7 +7,7 @@ import (
 
 func NewLogger(cfg *Config) Logger {
 	lgCfg := zap.NewProductionConfig()
-	if cfg.Env == Local || cfg.Env == Dev {
+	if cfg.Env == Local {
 		lgCfg = zap.NewDevelopmentConfig()
 	}
 

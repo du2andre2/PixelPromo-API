@@ -1,0 +1,9 @@
+services:
+  pp-api:
+    container_name: "pp-api"
+    image: 517036156710.dkr.ecr.us-east-1.amazonaws.com/pp-api-ecr:v1.0.0
+    ports:
+      - "5050:5050"
+    environment:
+      - AWS_ACCESS_KEY_ID=XXXXXXXX
+      - AWS_SECRET_ACCESS_KEY=XXXXXXXXXX

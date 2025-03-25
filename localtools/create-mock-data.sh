@@ -4,12 +4,13 @@ echo "Creating mock data..."
 
 # Configurações
 DYNAMODB_ENDPOINT="http://localhost:4566"
-S3_BUCKET_USER="s3://pp-user-pictures"
-S3_BUCKET_PROMOTION="s3://pp-promotion-images"
+S3_BUCKET_USER="s3://pp-user-imgs"
+S3_BUCKET_PROMOTION="s3://pp-promotion-imgs"
 CATEGORY_COUNT=10
 USER_COUNT=10
 PROMOTION_COUNT=30
-IMAGES_PATH="./imgs"
+IMAGES_PATH="./imgs/promotions"
+PICTURES_PATH="./imgs/users"
 
 # Criar categorias
 echo "Creating categories..."
@@ -23,7 +24,7 @@ done
 
 # Enviar imagens para S3
 echo "Uploading images to S3..."
-aws s3 cp $IMAGES_PATH $S3_BUCKET_USER --recursive --endpoint-url $DYNAMODB_ENDPOINT > /dev/null
+aws s3 cp $PICTURES_PATH $S3_BUCKET_USER --recursive --endpoint-url $DYNAMODB_ENDPOINT > /dev/null
 aws s3 cp $IMAGES_PATH $S3_BUCKET_PROMOTION --recursive --endpoint-url $DYNAMODB_ENDPOINT > /dev/null
 
 # Criar usuários

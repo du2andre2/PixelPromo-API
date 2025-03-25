@@ -35,7 +35,7 @@ func NewRouter(
 func (r *router) Run() {
 	gin := gin.Default()
 	r.setup(gin)
-	gin.Run("localhost:5000")
+	gin.Run(":5050")
 }
 
 func (r *router) setup(gin *gin.Engine) {
