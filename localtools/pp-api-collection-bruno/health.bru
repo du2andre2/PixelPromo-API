@@ -1,0 +1,22 @@
+meta {
+  name: health
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{api-url}}/health
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+      "email":"user1@gmail.com",
+      "password":"123123"
+  }
+}
+
+script:post-response {
+  bru.setVar("token", res.body.token);
+}

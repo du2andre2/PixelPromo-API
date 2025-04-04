@@ -315,6 +315,10 @@ func (r *Controller) Login(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response)
 }
 
+func (r *Controller) Health(ctx *gin.Context) {
+	ctx.JSON(http.StatusOK, "ok")
+}
+
 func (r *Controller) CreatePromotion(ctx *gin.Context) {
 
 	var promotion model.Promotion

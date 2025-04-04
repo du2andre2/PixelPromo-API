@@ -48,6 +48,7 @@ func (r *router) setup(gin *gin.Engine) {
 		MaxAge:           12 * time.Hour,
 	}))
 
+	gin.GET("/health", r.controller.Health)
 	gin.POST("/auth", r.controller.Login)
 	gin.POST("/users", r.controller.CreateUser)
 

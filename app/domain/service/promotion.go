@@ -155,8 +155,9 @@ func (s *service) GetFavoritesPromotionsByUserId(ctx context.Context, userId str
 			s.log.Error(err.Error())
 			return []model.Promotion{}, err
 		}
-
-		promotions = append(promotions, *promotion)
+		if promotion != nil {
+			promotions = append(promotions, *promotion)
+		}
 
 	}
 

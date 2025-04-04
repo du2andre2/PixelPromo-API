@@ -36,7 +36,7 @@ for i in $(seq 1 $USER_COUNT); do
     USER_EMAIL="user$i@gmail.com"
     USER_NAME="user_$i"
     USER_PASSWORD="123123"
-    USER_PICTURE="https://$S3_BUCKET_USER.s3.$AWS_REGION.amazonaws.com/perfil$i.png"
+    USER_PICTURE="https://s3.$AWS_REGION.amazonaws.com/pp-user-imgs/perfil$i.png"
     CREATED_AT=$(date -Iseconds)
 
     aws dynamodb put-item \
@@ -62,7 +62,8 @@ for i in $(seq 1 $PROMOTION_COUNT); do
 
     TITLE="Promoção Jogo $i"
     DESCRIPTION="Descrição da promoção $i"
-    IMAGE_URL="https://$S3_BUCKET_PROMOTION.s3.$AWS_REGION.amazonaws.com/jogo$(( (i % 12) + 1 )).png"
+    IMAGE_URL="https://s3.$AWS_REGION.amazonaws.com/pp-promotion-imgs/jogo$(( (i % 12) + 1 )).png"
+
     LINK="https://example.com/promo_$i"
 
     # Gerar preços em float
